@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type Cache struct {
+type CacheOption struct {
 	Addrs        string
 	Password     string
 	DB           int

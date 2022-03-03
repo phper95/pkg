@@ -1,53 +1,40 @@
 package redis
 
 import (
+	"github.com/go-redis/redis/v7"
 	"pkg/cache"
+	"pkg/errors"
+	"pkg/timeutil"
 	"pkg/trace"
 	"strings"
 	"time"
-
-	"github.com/go-redis/redis/v7"
 )
 
-type Option func(*option)
-
-type Trace = trace.T
-
-type option struct {
-	Trace *trace.Trace
-	Redis *trace.Redis
-}
-
-func newOption() *option {
-	return &option{}
-}
-
-type cacheRepo struct {
+type redisClient struct {
 	client *redis.Client
 }
 
-func New() (Repo, error) {
-	client, err := redisConnect()
-	if err != nil {
-		return nil, err
-	}
+var redisClients = make(map[string]*redisClient)
 
-	return &cacheRepo{
+func InitRedis(clientName string, option *cache.CacheOption) error {
+	client, err := redisConnect(option)
+	redisClients[clientName] = &redisClient{
 		client: client,
-	}, nil
+	}
+	return err
+}
+func GetRedisClient(clientName string) *redisClient {
+	return redisClients[clientName]
 }
 
-func (c *cacheRepo) i() {}
-
-func redisConnect() (*redis.Client, error) {
-	cfg := configs.Get().Redis
+func redisConnect(option *cache.CacheOption) (*redis.Client, error) {
 	client := redis.NewClient(&redis.Options{
-		Addr:         cfg.Addr,
-		Password:     cfg.Pass,
-		DB:           cfg.Db,
-		MaxRetries:   cfg.MaxRetries,
-		PoolSize:     cfg.PoolSize,
-		MinIdleConns: cfg.MinIdleConns,
+		Addr:         option.Addrs,
+		Password:     option.Password,
+		DB:           option.DB,
+		MaxRetries:   option.MaxRetries,
+		PoolSize:     option.PoolSize,
+		MinIdleConns: option.MinIdleConns,
 	})
 
 	if err := client.Ping().Err(); err != nil {
@@ -58,18 +45,19 @@ func redisConnect() (*redis.Client, error) {
 }
 
 // Set set some <key,value> into redis
-func (c *cacheRepo) Set(key, value string, ttl time.Duration, options ...*cache.Option) error {
+func (c *redisClient) Set(key, value string, ttl time.Duration, trace *trace.Cache) error {
 	ts := time.Now()
-	opt := newOption()
+
 	defer func() {
-		if opt.Trace != nil {
-			opt.Redis.Timestamp = timeutil.CSTLayoutString()
-			opt.Redis.Handle = "set"
-			opt.Redis.Key = key
-			opt.Redis.Value = value
-			opt.Redis.TTL = ttl.Minutes()
-			opt.Redis.CostSeconds = time.Since(ts).Seconds()
-			opt.Trace.AppendRedis(opt.Redis)
+		CostMillisecond := time.Since(ts).Milliseconds()
+		if trace.Open || CostMillisecond >= trace.SlowWarnLogMillisecond {
+			trace.TraceTime = timeutil.CSTLayoutString()
+			trace.CMD = "set"
+			trace.Key = key
+			trace.Value = value
+			trace.TTL = ttl.Minutes()
+			trace.CostMillisecond = CostMillisecond
+			trace.Logger.Warn()
 		}
 	}()
 
@@ -85,11 +73,10 @@ func (c *cacheRepo) Set(key, value string, ttl time.Duration, options ...*cache.
 }
 
 // Get get some key from redis
-func (c *cacheRepo) Get(key string, options ...Option) (string, error) {
+func (c *redisClient) Get(key string, trace trace.Cache) (string, error) {
 	ts := time.Now()
-	opt := newOption()
 	defer func() {
-		if opt.Trace != nil {
+		if trace.Trace != nil {
 			opt.Redis.Timestamp = timeutil.CSTLayoutString()
 			opt.Redis.Handle = "get"
 			opt.Redis.Key = key
@@ -111,7 +98,7 @@ func (c *cacheRepo) Get(key string, options ...Option) (string, error) {
 }
 
 // TTL get some key from redis
-func (c *cacheRepo) TTL(key string) (time.Duration, error) {
+func (c *redisClient) TTL(key string) (time.Duration, error) {
 	ttl, err := c.client.TTL(key).Result()
 	if err != nil {
 		return -1, errors.Wrapf(err, "redis get key: %s err", key)
@@ -121,18 +108,18 @@ func (c *cacheRepo) TTL(key string) (time.Duration, error) {
 }
 
 // Expire expire some key
-func (c *cacheRepo) Expire(key string, ttl time.Duration) bool {
+func (c *redisClient) Expire(key string, ttl time.Duration) bool {
 	ok, _ := c.client.Expire(key, ttl).Result()
 	return ok
 }
 
 // ExpireAt expire some key at some time
-func (c *cacheRepo) ExpireAt(key string, ttl time.Time) bool {
+func (c *redisClient) ExpireAt(key string, ttl time.Time) bool {
 	ok, _ := c.client.ExpireAt(key, ttl).Result()
 	return ok
 }
 
-func (c *cacheRepo) Exists(keys ...string) bool {
+func (c *redisClient) Exists(keys ...string) bool {
 	if len(keys) == 0 {
 		return true
 	}
@@ -140,9 +127,9 @@ func (c *cacheRepo) Exists(keys ...string) bool {
 	return value > 0
 }
 
-func (c *cacheRepo) Del(key string, options ...Option) bool {
+func (c *redisClient) Del(key string, trace trace.Cache) bool {
 	ts := time.Now()
-	opt := newOption()
+
 	defer func() {
 		if opt.Trace != nil {
 			opt.Redis.Timestamp = timeutil.CSTLayoutString()
@@ -165,9 +152,9 @@ func (c *cacheRepo) Del(key string, options ...Option) bool {
 	return value > 0
 }
 
-func (c *cacheRepo) Incr(key string, options ...Option) int64 {
+func (c *redisClient) Incr(key string, trace trace.Cache) int64 {
 	ts := time.Now()
-	opt := newOption()
+
 	defer func() {
 		if opt.Trace != nil {
 			opt.Redis.Timestamp = timeutil.CSTLayoutString()
@@ -186,7 +173,7 @@ func (c *cacheRepo) Incr(key string, options ...Option) int64 {
 }
 
 // Close close redis client
-func (c *cacheRepo) Close() error {
+func (c *redisClient) Close() error {
 	return c.client.Close()
 }
 
@@ -201,7 +188,7 @@ func WithTrace(t Trace) Option {
 }
 
 // Version redis server version
-func (c *cacheRepo) Version() string {
+func (c *redisClient) Version() string {
 	server := c.client.Info("server").Val()
 	spl1 := strings.Split(server, "# Server")
 	spl2 := strings.Split(spl1[1], "redis_version:")
