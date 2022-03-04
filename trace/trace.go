@@ -3,7 +3,6 @@ package trace
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
 	"go.uber.org/zap"
 	"io"
 	"sync"
@@ -12,27 +11,29 @@ import (
 const Header = "TRACE-ID"
 
 type T interface {
-	i()
 	ID() string
 	WithRequest(req *Request) *Trace
 	WithResponse(resp *Response) *Trace
 	AppendDialog(dialog *Dialog) *Trace
 	AppendSQL(sql *SQL) *Trace
-	AppendCache(redis *Cache) *Trace
+	AppendRedis(Redis *Redis) *Trace
+	SetLogger(logger *zap.Logger)
 }
 
 // Trace 记录的参数
 type Trace struct {
 	mux                sync.Mutex
-	Identifier         string    `json:"trace_id"`             // 链路ID
-	Request            *Request  `json:"request"`              // 请求信息
-	Response           *Response `json:"response"`             // 返回信息
-	ThirdPartyRequests []*Dialog `json:"third_party_requests"` // 调用第三方接口的信息
-	Debugs             []*Debug  `json:"debugs"`               // 调试信息
-	SQLs               []*SQL    `json:"sqls"`                 // 执行的 SQL 信息
-	Cache              []*Cache  `json:"redis"`                // 执行的 cache 信息
-	Success            bool      `json:"success"`              // 请求结果 true or false
-	CostMillisecond    float64   `json:"cost_millisecond"`     // 执行时长(单位ms)
+	Identifier         string      `json:"trace_id"`             // 链路ID
+	Request            *Request    `json:"request"`              // 请求信息
+	Response           *Response   `json:"response"`             // 返回信息
+	ThirdPartyRequests []*Dialog   `json:"third_party_requests"` // 调用第三方接口的信息
+	Debugs             []*Debug    `json:"debugs"`               // 调试信息
+	SQLs               []*SQL      `json:"sqls"`                 // 执行的 SQL 信息
+	Redis              []*Redis    `json:"redis"`                // 执行的 Redis 信息
+	Success            bool        `json:"success"`              // 请求结果 true or false
+	CostMillisecond    float64     `json:"cost_millisecond"`     // 执行时长(单位ms)
+	Logger             *zap.Logger `json:"-"`
+	AlwaysTrace        bool        `json:"always_trace"`
 }
 
 // Request 请求信息
@@ -42,6 +43,7 @@ type Request struct {
 	DecodedURL string      `json:"decoded_url"` // 请求地址
 	Header     interface{} `json:"header"`      // 请求 Header 信息
 	Body       interface{} `json:"body"`        // 请求 Body 信息
+	Logger     *zap.Logger `json:"-"`
 }
 
 // Response 响应信息
@@ -53,35 +55,28 @@ type Response struct {
 	HttpCode        int         `json:"http_code"`                   // HTTP 状态码
 	HttpCodeMsg     string      `json:"http_code_msg"`               // HTTP 状态码信息
 	CostMillisecond int64       `json:"cost_millisecond"`            // 执行时间(单位ms)
+	Logger          *zap.Logger `json:"-"`
 }
 
 type SQL struct {
-	TraceTime       string `json:"trace_time"`       // 时间，格式：2006-01-02 15:04:05
-	Stack           string `json:"stack"`            // 文件地址和行号
-	SQL             string `json:"sql"`              // SQL 语句
-	AffectedRows    int64  `json:"affected_rows"`    // 影响行数
-	CostMillisecond int64  `json:"cost_millisecond"` // 执行时长(单位ms)
+	TraceTime       string      `json:"trace_time"`       // 时间，格式：2006-01-02 15:04:05
+	Stack           string      `json:"stack"`            // 文件地址和行号
+	SQL             string      `json:"sql"`              // SQL 语句
+	AffectedRows    int64       `json:"affected_rows"`    // 影响行数
+	CostMillisecond int64       `json:"cost_millisecond"` // 执行时长(单位ms)
+	Logger          *zap.Logger `json:"-"`
 }
 
-type Cache struct {
-	Open                   bool        `json:"-"`
+type Redis struct {
 	SlowWarnLogMillisecond int64       `json:"-"`
+	Name                   string      `json:"name"`             //缓存组件名
+	TraceTime              string      `json:"trace_time"`       // 时间，格式：2006-01-02 15:04:05
+	CMD                    string      `json:"cmd"`              // 操作，SET/GET 等
+	Key                    string      `json:"key"`              // Key
+	Value                  string      `json:"value,omitempty"`  // Value
+	TTL                    float64     `json:"ttl,omitempty"`    // 超时时长(单位分)
+	CostMillisecond        int64       `json:"cost_millisecond"` // 执行时长(单位ms)
 	Logger                 *zap.Logger `json:"-"`
-	CacheBodyMsg           string      `json:"cache_body_msg"`
-}
-type CacheBody struct {
-	Name            string  `json:"name"`             //缓存组件名
-	TraceTime       string  `json:"trace_time"`       // 时间，格式：2006-01-02 15:04:05
-	CMD             string  `json:"cmd"`              // 操作，SET/GET 等
-	Key             string  `json:"key"`              // Key
-	Value           string  `json:"value,omitempty"`  // Value
-	TTL             float64 `json:"ttl,omitempty"`    // 超时时长(单位分)
-	CostMillisecond int64   `json:"cost_millisecond"` // 执行时长(单位ms)
-}
-
-func (c *Cache) SetCacheBody(cachebody *CacheBody) {
-	c.CacheBodyMsg = fmt.Sprintf("name : %s ; trace_time : %d ; cmd : %s ; key : %s ; value : %s ; ttl : %s ; cost_millisecond : %s",
-		cachebody.Name, cachebody.TraceTime, cachebody.CMD, cachebody.Key, cachebody.Value, cachebody.TTL, cachebody.CostMillisecond)
 }
 
 type D interface {
@@ -95,6 +90,7 @@ type Dialog struct {
 	Responses       []*Response `json:"responses"`        // 返回信息
 	Success         bool        `json:"success"`          // 是否成功，true 或 false
 	CostMillisecond int64       `json:"cost_millisecond"` // 执行时长(单位ms)
+	Logger          *zap.Logger `json:"-"`
 }
 
 // AppendResponse 按转的追加response信息
@@ -113,6 +109,7 @@ type Debug struct {
 	Key             string      `json:"key"`              // 标示
 	Value           interface{} `json:"value"`            // 值
 	CostMillisecond int64       `json:"cost_millisecond"` // 执行时长(单位ms)
+	Logger          *zap.Logger `json:"-"`
 }
 
 func New(id string) *Trace {
@@ -126,8 +123,6 @@ func New(id string) *Trace {
 		Identifier: id,
 	}
 }
-
-func (t *Trace) i() {}
 
 // ID 唯一标识符
 func (t *Trace) ID() string {
@@ -185,15 +180,20 @@ func (t *Trace) AppendSQL(sql *SQL) *Trace {
 	return t
 }
 
-// AppendRedis 追加 cache
-func (t *Trace) AppendCache(cache *Cache) *Trace {
-	if cache == nil {
+//设置日志
+func (t *Trace) SetLogger(logger *zap.Logger) {
+	t.Logger = logger
+}
+
+// AppendRedis 追加 Redis
+func (t *Trace) AppendRedis(Redis *Redis) *Trace {
+	if Redis == nil {
 		return t
 	}
 
 	t.mux.Lock()
 	defer t.mux.Unlock()
 
-	t.Cache = append(t.Cache, cache)
+	t.Redis = append(t.Redis, Redis)
 	return t
 }
