@@ -1,10 +1,10 @@
 package redis
 
 import (
+	"gitee.com/phper95/pkg/errors"
+	"gitee.com/phper95/pkg/timeutil"
+	"gitee.com/phper95/pkg/trace"
 	"github.com/go-redis/redis/v7"
-	"github.com/go-teamer/pkg/errors"
-	"github.com/go-teamer/pkg/timeutil"
-	"github.com/go-teamer/pkg/trace"
 	"go.uber.org/zap"
 	"strconv"
 	"strings"
