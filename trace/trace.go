@@ -62,13 +62,14 @@ type Response struct {
 }
 
 type SQL struct {
-	TraceTime       string      `json:"trace_time"`       // 时间，格式：2006-01-02 15:04:05
-	Stack           string      `json:"stack"`            // 文件地址和行号
-	SQL             string      `json:"sql"`              // SQL 语句
-	AffectedRows    int64       `json:"affected_rows"`    // 影响行数
-	CostMillisecond int64       `json:"cost_millisecond"` // 执行时长(单位ms)
-	Logger          *zap.Logger `json:"-"`
-	AlwaysTrace     bool        `json:"always_trace"`
+	TraceTime             string      `json:"trace_time"`              // 时间，格式：2006-01-02 15:04:05
+	Stack                 string      `json:"stack"`                   // 文件地址和行号
+	SQL                   string      `json:"sql"`                     // SQL 语句
+	AffectedRows          int64       `json:"affected_rows"`           // 影响行数
+	CostMillisecond       int64       `json:"cost_millisecond"`        // 执行时长(单位ms)
+	SlowLoggerMillisecond int64       `json:"slow_logger_millisecond"` //慢查记录时间
+	Logger                *zap.Logger `json:"-"`
+	AlwaysTrace           bool        `json:"always_trace"`
 }
 
 type Redis struct {
