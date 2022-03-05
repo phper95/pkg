@@ -6,6 +6,12 @@ github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/go-redis/redis/v7 v7.4.1 h1:PASvf36gyUpr2zdOUS/9Zqc80GbM+9BDyiJSJDDOrTI=
 github.com/go-redis/redis/v7 v7.4.1/go.mod h1:JDNMw23GTyLNC4GZu9njt15ctBQVn7xjRfnwdHj/Dcg=
+github.com/go-teamer/pkg/errors v0.0.0-20220305132243-8f8a9c86ccce h1:Uh8YNN2a9lE+PFhoYykLqBeV8dqZDQMRgOed44o8Ga0=
+github.com/go-teamer/pkg/errors v0.0.0-20220305132243-8f8a9c86ccce/go.mod h1:9jgIzl66FZfcQ91B5d6Bv4EtYbT6Tl7oETIQmybDEyQ=
+github.com/go-teamer/pkg/timeutil v0.0.0-20220305132243-8f8a9c86ccce h1:sVsSlGpJQvFGu+nfKAH635ZaNJyQVVnH/tH8+KlxWlA=
+github.com/go-teamer/pkg/timeutil v0.0.0-20220305132243-8f8a9c86ccce/go.mod h1:P123GuZHq+WFzitutz9ATq3Dq36GfdU5lLWs9JcSXvs=
+github.com/go-teamer/pkg/trace v0.0.0-20220305132243-8f8a9c86ccce h1:5n3SgX/6B2K1gz2O8uYQPflrGV9cnBbB73mOPt0itSs=
+github.com/go-teamer/pkg/trace v0.0.0-20220305132243-8f8a9c86ccce/go.mod h1:IPGBXeAOjytHK+tZProqLe7kcEvSXQ6RmYMZaAKxE+A=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/protobuf v1.3.2/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/hpcloud/tail v1.0.0 h1:nfCOvKYfkgYP8hkirhJocXT2+zOD8yUNjXaWfTlyFKI=

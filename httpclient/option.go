@@ -1,8 +1,8 @@
 package httpclient
 
 import (
+	"github.com/go-teamer/pkg/trace"
 	"go.uber.org/zap"
-	"pkg/trace"
 	"sync"
 	"time"
 )
