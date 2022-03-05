@@ -1,4 +1,4 @@
-module logger
+module github.com/go-teamer/logger
 
 go 1.16
 

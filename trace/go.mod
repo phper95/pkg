@@ -1,4 +1,4 @@
-module  pkg/trace
+module  github.com/go-teamer/pkg/trace
 
 go 1.16
 

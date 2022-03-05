@@ -1,4 +1,4 @@
-module pkg/promethues
+module github.com/go-teamer/pkg/promethues
 
 go 1.16
 

@@ -2,10 +2,10 @@ package redis
 
 import (
 	"github.com/go-redis/redis/v7"
+	"github.com/go-teamer/pkg/errors"
+	"github.com/go-teamer/pkg/timeutil"
+	"github.com/go-teamer/pkg/trace"
 	"go.uber.org/zap"
-	"pkg/errors"
-	"pkg/timeutil"
-	"pkg/trace"
 	"strconv"
 	"strings"
 	"time"

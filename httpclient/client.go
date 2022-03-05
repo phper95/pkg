@@ -6,12 +6,12 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/go-teamer/pkg/errors"
+	"github.com/go-teamer/pkg/trace"
 	"go.uber.org/zap"
 	"io/ioutil"
 	"net/http"
 	httpURL "net/url"
-	"pkg/errors"
-	"pkg/trace"
 	"time"
 )
 
