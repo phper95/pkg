@@ -1,3 +1,3 @@
-module github.com/go-teamer/pkg/timeutil
+module gitee.com/phper95/pkg/timeutil
 
 go 1.16

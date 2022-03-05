@@ -1,5 +1,4 @@
-module github.com/go-teamer/pkg/errors
-
+module gitee.com/phper95/pkg/errors
 go 1.16
 
 require (

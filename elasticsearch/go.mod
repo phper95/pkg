@@ -1,4 +1,4 @@
-module github.com/go-teamer/pkg/elasticsearch
+module gitee.com/phper95/pkg/elasticsearch
 
 go 1.16
 replace (

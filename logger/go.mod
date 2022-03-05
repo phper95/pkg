@@ -1,4 +1,4 @@
-module github.com/go-teamer/pkg/logger
+module gitee.com/phper95/pkg/logger
 
 go 1.16
 

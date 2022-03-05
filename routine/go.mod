@@ -1,3 +1,3 @@
-module  github.com/go-teamer/pkg/routine
+module  gitee.com/phper95/pkg/routine
 
 go 1.16

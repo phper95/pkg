@@ -3,10 +3,10 @@ github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZx
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/go-teamer/pkg/errors v0.0.0-20220305132243-8f8a9c86ccce h1:Uh8YNN2a9lE+PFhoYykLqBeV8dqZDQMRgOed44o8Ga0=
-github.com/go-teamer/pkg/errors v0.0.0-20220305132243-8f8a9c86ccce/go.mod h1:9jgIzl66FZfcQ91B5d6Bv4EtYbT6Tl7oETIQmybDEyQ=
-github.com/go-teamer/pkg/trace v0.0.0-20220305132243-8f8a9c86ccce h1:5n3SgX/6B2K1gz2O8uYQPflrGV9cnBbB73mOPt0itSs=
-github.com/go-teamer/pkg/trace v0.0.0-20220305132243-8f8a9c86ccce/go.mod h1:IPGBXeAOjytHK+tZProqLe7kcEvSXQ6RmYMZaAKxE+A=
+gitee.com/phper95/pkg/errors v0.0.0-20220305132243-8f8a9c86ccce h1:Uh8YNN2a9lE+PFhoYykLqBeV8dqZDQMRgOed44o8Ga0=
+gitee.com/phper95/pkg/errors v0.0.0-20220305132243-8f8a9c86ccce/go.mod h1:9jgIzl66FZfcQ91B5d6Bv4EtYbT6Tl7oETIQmybDEyQ=
+gitee.com/phper95/pkg/trace v0.0.0-20220305132243-8f8a9c86ccce h1:5n3SgX/6B2K1gz2O8uYQPflrGV9cnBbB73mOPt0itSs=
+gitee.com/phper95/pkg/trace v0.0.0-20220305132243-8f8a9c86ccce/go.mod h1:IPGBXeAOjytHK+tZProqLe7kcEvSXQ6RmYMZaAKxE+A=
 github.com/kr/pretty v0.1.0/go.mod h1:dAy3ld7l9f0ibDNOQOHHMYYIIbhfbHSm3C4ZsoJORNo=
 github.com/kr/pty v1.1.1/go.mod h1:pFQYn66WHrOpPYNljwOMqo10TkYh1fy3cYio2l3bCsQ=
 github.com/kr/text v0.1.0/go.mod h1:4Jbv+DJW3UT/LiOwJeYQe1efqtUx/iVham/4vfdArNI=
