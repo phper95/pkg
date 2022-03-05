@@ -128,8 +128,5 @@ func dbConnect(user, pass, addr, dbName string, option *option) (*gorm.DB, error
 		sqlDB.SetConnMaxLifetime(time.Minute * option.ConnMaxLifeTime)
 	}
 
-	// 使用插件
-	db.Use(&TracePlugin{})
-
 	return db, nil
 }
