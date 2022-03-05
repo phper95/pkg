@@ -18,6 +18,7 @@ type T interface {
 	AppendSQL(sql *SQL) *Trace
 	AppendRedis(Redis *Redis) *Trace
 	SetLogger(logger *zap.Logger)
+	SetAlwaysTrace(b bool)
 }
 
 // Trace 记录的参数
@@ -38,12 +39,13 @@ type Trace struct {
 
 // Request 请求信息
 type Request struct {
-	TTL        string      `json:"ttl"`         // 请求超时时间
-	Method     string      `json:"method"`      // 请求方式
-	DecodedURL string      `json:"decoded_url"` // 请求地址
-	Header     interface{} `json:"header"`      // 请求 Header 信息
-	Body       interface{} `json:"body"`        // 请求 Body 信息
-	Logger     *zap.Logger `json:"-"`
+	TTL         string      `json:"ttl"`         // 请求超时时间
+	Method      string      `json:"method"`      // 请求方式
+	DecodedURL  string      `json:"decoded_url"` // 请求地址
+	Header      interface{} `json:"header"`      // 请求 Header 信息
+	Body        interface{} `json:"body"`        // 请求 Body 信息
+	Logger      *zap.Logger `json:"-"`
+	AlwaysTrace bool        `json:"always_trace"`
 }
 
 // Response 响应信息
@@ -56,6 +58,7 @@ type Response struct {
 	HttpCodeMsg     string      `json:"http_code_msg"`               // HTTP 状态码信息
 	CostMillisecond int64       `json:"cost_millisecond"`            // 执行时间(单位ms)
 	Logger          *zap.Logger `json:"-"`
+	AlwaysTrace     bool        `json:"always_trace"`
 }
 
 type SQL struct {
@@ -65,18 +68,20 @@ type SQL struct {
 	AffectedRows    int64       `json:"affected_rows"`    // 影响行数
 	CostMillisecond int64       `json:"cost_millisecond"` // 执行时长(单位ms)
 	Logger          *zap.Logger `json:"-"`
+	AlwaysTrace     bool        `json:"always_trace"`
 }
 
 type Redis struct {
-	SlowWarnLogMillisecond int64       `json:"-"`
-	Name                   string      `json:"name"`             //缓存组件名
-	TraceTime              string      `json:"trace_time"`       // 时间，格式：2006-01-02 15:04:05
-	CMD                    string      `json:"cmd"`              // 操作，SET/GET 等
-	Key                    string      `json:"key"`              // Key
-	Value                  string      `json:"value,omitempty"`  // Value
-	TTL                    float64     `json:"ttl,omitempty"`    // 超时时长(单位分)
-	CostMillisecond        int64       `json:"cost_millisecond"` // 执行时长(单位ms)
-	Logger                 *zap.Logger `json:"-"`
+	Name                  string      `json:"name"`                    //缓存组件名
+	TraceTime             string      `json:"trace_time"`              // 时间，格式：2006-01-02 15:04:05
+	CMD                   string      `json:"cmd"`                     // 操作，SET/GET 等
+	Key                   string      `json:"key"`                     // Key
+	Value                 string      `json:"value,omitempty"`         // Value
+	TTL                   float64     `json:"ttl,omitempty"`           // 超时时长(单位分)
+	CostMillisecond       int64       `json:"cost_millisecond"`        // 执行时长(单位ms)
+	SlowLoggerMillisecond int64       `json:"slow_logger_millisecond"` //慢查记录时间
+	Logger                *zap.Logger `json:"-"`
+	AlwaysTrace           bool        `json:"always_trace"`
 }
 
 type D interface {
@@ -91,6 +96,7 @@ type Dialog struct {
 	Success         bool        `json:"success"`          // 是否成功，true 或 false
 	CostMillisecond int64       `json:"cost_millisecond"` // 执行时长(单位ms)
 	Logger          *zap.Logger `json:"-"`
+	AlwaysTrace     bool        `json:"always_trace"`
 }
 
 // AppendResponse 按转的追加response信息
@@ -183,6 +189,11 @@ func (t *Trace) AppendSQL(sql *SQL) *Trace {
 //设置日志
 func (t *Trace) SetLogger(logger *zap.Logger) {
 	t.Logger = logger
+}
+
+//始终记录trace信息
+func (t *Trace) SetAlwaysTrace(b bool) {
+	t.AlwaysTrace = true
 }
 
 // AppendRedis 追加 Redis
