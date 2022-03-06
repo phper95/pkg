@@ -29,6 +29,8 @@ type option struct {
 	disableConsole bool
 }
 
+var logger *zap.Logger
+
 // WithDebugLevel only greater than 'level' will output
 func WithDebugLevel() Option {
 	return func(opt *option) {
@@ -115,7 +117,7 @@ func WithDisableConsole() Option {
 }
 
 // NewLogger return a encoder zap logger,
-func NewLogger(opts ...Option) (*zap.Logger, error) {
+func InitLogger(opts ...Option) {
 	opt := &option{level: DefaultLevel, fields: make(map[string]string)}
 	for _, f := range opts {
 		f(opt)
@@ -183,7 +185,7 @@ func NewLogger(opts ...Option) (*zap.Logger, error) {
 		)
 	}
 
-	logger := zap.New(core,
+	logger = zap.New(core,
 		zap.AddCaller(),
 		zap.ErrorOutput(stderr),
 	)
@@ -191,10 +193,20 @@ func NewLogger(opts ...Option) (*zap.Logger, error) {
 	for key, value := range opt.fields {
 		logger = logger.WithOptions(zap.Fields(zapcore.Field{Key: key, Type: zapcore.StringType, String: value}))
 	}
-	return logger, nil
 }
-
-var _ Meta = (*meta)(nil)
+func Info(msg string, fields ...zap.Field) {
+	logger.Info(msg, fields...)
+}
+func Debug(msg string, fields ...zap.Field) {
+	logger.Debug(msg, fields...)
+	logger.Info(msg, fields...)
+}
+func Warn(msg string, fields ...zap.Field) {
+	logger.Warn(msg, fields...)
+}
+func Error(msg string, fields ...zap.Field) {
+	logger.Error(msg, fields...)
+}
 
 // Meta key-value
 type Meta interface {
