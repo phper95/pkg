@@ -12,9 +12,9 @@ import (
 // Predicate is a string that acts as a condition in the where clause
 type Predicate string
 type option struct {
-	MaxOpenConn     int
-	MaxIdleConn     int
-	ConnMaxLifeTime time.Duration
+	MaxOpenConn       int
+	MaxIdleConn       int
+	ConnMaxLifeSecond time.Duration
 }
 type Option func(*option)
 
@@ -32,7 +32,7 @@ var mysqlClients = make(map[string]*gorm.DB)
 func (o *option) reset() {
 	o.MaxOpenConn = 0
 	o.MaxIdleConn = 0
-	o.ConnMaxLifeTime = 0
+	o.ConnMaxLifeSecond = 0
 }
 func WithMaxOpenConn(maxOpenConn int) Option {
 	return func(opt *option) {
@@ -48,7 +48,7 @@ func WithMaxIdleConn(maxIdleConn int) Option {
 
 func WithConnMaxLifeTime(connMaxLifeTime time.Duration) Option {
 	return func(opt *option) {
-		opt.ConnMaxLifeTime = connMaxLifeTime
+		opt.ConnMaxLifeSecond = connMaxLifeTime
 	}
 }
 
@@ -124,8 +124,8 @@ func dbConnect(user, pass, addr, dbName string, option *option) (*gorm.DB, error
 	}
 
 	// 设置最大连接超时
-	if option.ConnMaxLifeTime > 0 {
-		sqlDB.SetConnMaxLifetime(time.Minute * option.ConnMaxLifeTime)
+	if option.ConnMaxLifeSecond > 0 {
+		sqlDB.SetConnMaxLifetime(time.Second * option.ConnMaxLifeSecond)
 	}
 
 	return db, nil
