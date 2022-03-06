@@ -208,6 +208,10 @@ func Error(msg string, fields ...zap.Field) {
 	logger.Error(msg, fields...)
 }
 
+func Sync() {
+	logger.Sync()
+}
+
 // Meta key-value
 type Meta interface {
 	Key() string
