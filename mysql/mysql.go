@@ -46,7 +46,7 @@ func WithMaxIdleConn(maxIdleConn int) Option {
 	}
 }
 
-func WithConnMaxLifeTime(connMaxLifeTime time.Duration) Option {
+func WithConnMaxLifeSecond(connMaxLifeTime time.Duration) Option {
 	return func(opt *option) {
 		opt.ConnMaxLifeSecond = connMaxLifeTime
 	}
