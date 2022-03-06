@@ -194,6 +194,11 @@ func InitLogger(opts ...Option) {
 		logger = logger.WithOptions(zap.Fields(zapcore.Field{Key: key, Type: zapcore.StringType, String: value}))
 	}
 }
+
+func GetLogger() *zap.Logger {
+	return logger
+}
+
 func Info(msg string, fields ...zap.Field) {
 	logger.Info(msg, fields...)
 }
