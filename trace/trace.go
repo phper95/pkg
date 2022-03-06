@@ -16,7 +16,7 @@ type T interface {
 	WithResponse(resp *Response) *Trace
 	AppendDialog(dialog *Dialog) *Trace
 	AppendSQL(sql *SQL) *Trace
-	AppendRedis(Redis *Redis) *Trace
+	AppendCache(Cache *Cache) *Trace
 	SetLogger(logger *zap.Logger)
 	SetAlwaysTrace(b bool)
 }
@@ -30,7 +30,7 @@ type Trace struct {
 	ThirdPartyRequests []*Dialog   `json:"third_party_requests"` // 调用第三方接口的信息
 	Debugs             []*Debug    `json:"debugs"`               // 调试信息
 	SQLs               []*SQL      `json:"sqls"`                 // 执行的 SQL 信息
-	Redis              []*Redis    `json:"redis"`                // 执行的 Redis 信息
+	Cache              []*Cache    `json:"Cache"`                // 执行的 Cache 信息
 	Success            bool        `json:"success"`              // 请求结果 true or false
 	CostMillisecond    float64     `json:"cost_millisecond"`     // 执行时长(单位ms)
 	Logger             *zap.Logger `json:"-"`
@@ -72,7 +72,7 @@ type SQL struct {
 	AlwaysTrace           bool        `json:"always_trace"`
 }
 
-type Redis struct {
+type Cache struct {
 	Name                  string      `json:"name"`                    //缓存组件名
 	TraceTime             string      `json:"trace_time"`              // 时间，格式：2006-01-02 15:04:05
 	CMD                   string      `json:"cmd"`                     // 操作，SET/GET 等
@@ -197,15 +197,15 @@ func (t *Trace) SetAlwaysTrace(b bool) {
 	t.AlwaysTrace = true
 }
 
-// AppendRedis 追加 Redis
-func (t *Trace) AppendRedis(Redis *Redis) *Trace {
-	if Redis == nil {
+// AppendCache 追加 Cache
+func (t *Trace) AppendCache(Cache *Cache) *Trace {
+	if Cache == nil {
 		return t
 	}
 
 	t.mux.Lock()
 	defer t.mux.Unlock()
 
-	t.Redis = append(t.Redis, Redis)
+	t.Cache = append(t.Cache, Cache)
 	return t
 }

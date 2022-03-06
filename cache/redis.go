@@ -38,7 +38,7 @@ const (
 	MaxRetries   = 3
 )
 
-func InitRedis(clientName string, opt *redis.Options, trace *trace.Redis) error {
+func InitRedis(clientName string, opt *redis.Options, trace *trace.Cache) error {
 	if len(clientName) == 0 {
 		return errors.New("empty client name")
 	}
