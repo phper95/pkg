@@ -2,8 +2,8 @@ gitee.com/phper95/pkg/errors v0.0.0-20220305145820-1201417a8338 h1:UPqcUK/R6JuvR
 gitee.com/phper95/pkg/errors v0.0.0-20220305145820-1201417a8338/go.mod h1:QjWVzI0aT0OcBninaydQjEOE7mwhhI5x9SmUOkxR1aY=
 gitee.com/phper95/pkg/timeutil v0.0.0-20220305145820-1201417a8338 h1:rGKf3I0gkrX/f9NYQOd951/zrEqlG5L6ebzVV2iv4rk=
 gitee.com/phper95/pkg/timeutil v0.0.0-20220305145820-1201417a8338/go.mod h1:1EPAVZpuiWMRSbRZ3vjWXWk5yRbedoYKy0gUoviIUtY=
-gitee.com/phper95/pkg/trace v0.0.0-20220306054248-1c3565a8e84a h1:O0mM6FPhSe9oudFl7xOz0ndREvrqGfcMwJXnxmFQPyg=
-gitee.com/phper95/pkg/trace v0.0.0-20220306054248-1c3565a8e84a/go.mod h1:amV7G8HeVxTV7yWwt32O7PUuqZz0fcpkEsJiuV3a9QA=
+gitee.com/phper95/pkg/trace v0.0.0-20220306060926-45d91dc8443f h1:e87eHzRgMX9/RPdfGmOUrqh8L4iA5cOg2ZD5NuAY24I=
+gitee.com/phper95/pkg/trace v0.0.0-20220306060926-45d91dc8443f/go.mod h1:amV7G8HeVxTV7yWwt32O7PUuqZz0fcpkEsJiuV3a9QA=
 github.com/benbjohnson/clock v1.1.0 h1:Q92kusRqC1XV2MjkWETPvjJVqKetz1OzxZB7mHJLju8=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

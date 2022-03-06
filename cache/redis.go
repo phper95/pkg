@@ -29,7 +29,7 @@ type Redis interface {
 type redisClient struct {
 	client        *redis.Client
 	clusterClient *redis.ClusterClient
-	trace         *trace.Redis
+	trace         *trace.Cache
 }
 
 const (
@@ -58,7 +58,7 @@ func InitRedis(clientName string, opt *redis.Options, trace *trace.Cache) error 
 	return nil
 }
 
-func InitClusterRedis(clientName string, opt *redis.ClusterOptions, trace *trace.Redis) error {
+func InitClusterRedis(clientName string, opt *redis.ClusterOptions, trace *trace.Cache) error {
 	if len(clientName) == 0 {
 		return errors.New("empty client name")
 	}
