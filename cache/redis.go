@@ -1,4 +1,4 @@
-package redis
+package cache
 
 import (
 	"gitee.com/phper95/pkg/errors"

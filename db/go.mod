@@ -1,4 +1,4 @@
-module gitee.com/phper95/pkg/mysql
+module gitee.com/phper95/pkg/db
 
 go 1.16
 

@@ -1,4 +1,4 @@
-module gitee.com/phper95/pkg/redis
+module gitee.com/phper95/pkg/cache
 
 go 1.16
 
