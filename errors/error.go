@@ -16,11 +16,7 @@ func callers() []uintptr {
 // Error a error with caller stack information
 type Error interface {
 	error
-	t()
 }
-
-var _ Error = (*item)(nil)
-var _ fmt.Formatter = (*item)(nil)
 
 type item struct {
 	msg   string
@@ -30,8 +26,6 @@ type item struct {
 func (i *item) Error() string {
 	return i.msg
 }
-
-func (i *item) t() {}
 
 // Format used by go.uber.org/zap in Verbose
 func (i *item) Format(s fmt.State, verb rune) {
