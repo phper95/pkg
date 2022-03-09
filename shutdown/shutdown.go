@@ -25,7 +25,7 @@ func NewHook() Hook {
 		ctx: make(chan os.Signal, 1),
 	}
 
-	return hook.WithSignals(syscall.SIGINT, syscall.SIGTERM)
+	return hook.WithSignals(syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGQUIT, syscall.SIGHUP)
 }
 
 func (h *hook) WithSignals(signals ...syscall.Signal) Hook {
