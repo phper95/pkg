@@ -43,6 +43,8 @@ func (d *Docker) IsInstalled() bool {
 
 func (d *Docker) Start(c ContainerOption) (string, error) {
 	dockerArgs := d.getDockerRunOptions(c)
+	fmt.Println(dockerArgs)
+	return "", nil
 	command := exec.Command("docker", dockerArgs...)
 	command.Stderr = os.Stderr
 	result, err := command.Output()
@@ -76,7 +78,7 @@ func (d *Docker) WaitForStartOrKill(timeout int) error {
 }
 
 func (d *Docker) RemoveIfExists(c ContainerOption) error {
-	command := exec.Command("docker", "ps", "-q", "-f", "name=1212"+c.Name)
+	command := exec.Command("docker", "ps", "-q", "-f", "name="+c.Name)
 	output, err := command.CombinedOutput()
 	if err != nil {
 		return err
@@ -84,9 +86,7 @@ func (d *Docker) RemoveIfExists(c ContainerOption) error {
 	if len(output) == 0 {
 		return nil
 	}
-	fmt.Println(string(output), "####", err)
-	//d.Stop()
-	return nil
+	return d.Stop()
 }
 
 func (d *Docker) getContainerStatus() string {
@@ -112,6 +112,7 @@ func (d *Docker) getContainerStatus() string {
 	return DockerStatusStarting
 }
 
+//return example: [run -d --name mysql-for-unittest -p 3306:3306 -e MYSQL_USER=test -e MYSQL_PASSWORD=test -e MYSQL_DATABASE=shop -e MYSQL_ROOT_PASSWORD=root --tmpfs /var/lib/mysql mysql:5.7]
 func (d *Docker) getDockerRunOptions(c ContainerOption) []string {
 	portExpose := fmt.Sprintf("%s:%s", c.PortExpose, c.PortExpose)
 	var args []string
