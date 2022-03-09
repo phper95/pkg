@@ -43,8 +43,6 @@ func (d *Docker) IsInstalled() bool {
 
 func (d *Docker) Start(c ContainerOption) (string, error) {
 	dockerArgs := d.getDockerRunOptions(c)
-	fmt.Println(dockerArgs)
-	return "", nil
 	command := exec.Command("docker", dockerArgs...)
 	command.Stderr = os.Stderr
 	result, err := command.Output()
@@ -57,7 +55,7 @@ func (d *Docker) Start(c ContainerOption) (string, error) {
 	result, err = command.Output()
 	if err != nil {
 		d.Stop()
-		return "", err
+		return string(result), err
 	}
 	return string(result), nil
 }
@@ -78,7 +76,7 @@ func (d *Docker) WaitForStartOrKill(timeout int) error {
 }
 
 func (d *Docker) RemoveIfExists(c ContainerOption) error {
-	command := exec.Command("docker", "ps", "-q", "-f", "name="+c.Name)
+	command := exec.Command("docker", "ps", "-a", "-q", "-f", "name="+c.Name)
 	output, err := command.CombinedOutput()
 	if err != nil {
 		return err
@@ -86,6 +84,7 @@ func (d *Docker) RemoveIfExists(c ContainerOption) error {
 	if len(output) == 0 {
 		return nil
 	}
+	d.ContainerID = strings.Trim(string(output), "\n")
 	return d.Stop()
 }
 
@@ -125,5 +124,6 @@ func (d *Docker) getDockerRunOptions(c ContainerOption) []string {
 }
 
 func (d *Docker) Stop() error {
+	fmt.Println("rm ContainerID:", d.ContainerID)
 	return exec.Command("docker", "rm", "-f", d.ContainerID).Run()
 }
