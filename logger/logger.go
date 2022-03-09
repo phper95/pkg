@@ -198,18 +198,26 @@ func InitLogger(opts ...Option) {
 func GetLogger() *zap.Logger {
 	return logger
 }
+func setLogger() {
+	if logger == nil {
+		logger, _ = zap.NewProduction()
+	}
+}
 
 func Info(msg string, fields ...zap.Field) {
+	setLogger()
 	logger.Info(msg, fields...)
 }
 func Debug(msg string, fields ...zap.Field) {
+	setLogger()
 	logger.Debug(msg, fields...)
-	logger.Info(msg, fields...)
 }
 func Warn(msg string, fields ...zap.Field) {
+	setLogger()
 	logger.Warn(msg, fields...)
 }
 func Error(msg string, fields ...zap.Field) {
+	setLogger()
 	logger.Error(msg, fields...)
 }
 
