@@ -15,10 +15,6 @@ const (
 	DockerStatusStarting = "starting"
 )
 
-type DockerManager interface {
-	Start(c ContainerOption) (string, error)
-	Stop() error
-}
 type Docker struct {
 	ContainerID   string
 	ContainerName string
@@ -41,9 +37,28 @@ func (d *Docker) IsInstalled() bool {
 	return true
 }
 
+func (d *Docker) CreateNetwork(name string) error {
+	return exec.Command("docker", "network", "create", name).Run()
+}
+
+func (d *Docker) RemoveNetwork(name string) error {
+	return exec.Command("docker", "network", "rm", name).Run()
+}
+
+func (d *Docker) NetworkExists(name string) bool {
+	err := exec.Command("docker", "network", "inspect", name).Run()
+	if err != nil {
+		return false
+	}
+	return true
+}
+func (d *Docker) Exec(cmd string, arg ...string) error {
+	return exec.Command(cmd, arg...).Run()
+}
 func (d *Docker) Start(c ContainerOption) (string, error) {
 	dockerArgs := d.getDockerRunOptions(c)
 	command := exec.Command("docker", dockerArgs...)
+	fmt.Println("dockerArgs", dockerArgs)
 	command.Stderr = os.Stderr
 	result, err := command.Output()
 	if err != nil {
