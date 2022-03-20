@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var redisClients map[string]*Redis
+var redisClients = make(map[string]*Redis)
 
 type Redis struct {
 	client        *redis.Client
