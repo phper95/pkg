@@ -148,7 +148,10 @@ func withoutBody(method, url string, form httpURL.Values, options ...Option) (bo
 	}()
 
 	for _, f := range options {
-		f(opt)
+		if f != nil {
+			f(opt)
+		}
+
 	}
 	opt.header["Content-Type"] = []string{"application/x-www-form-urlencoded; charset=utf-8"}
 	if opt.trace != nil {
@@ -283,7 +286,9 @@ func withFormBody(method, url string, form httpURL.Values, options ...Option) (b
 	}()
 
 	for _, f := range options {
-		f(opt)
+		if f != nil {
+			f(opt)
+		}
 	}
 	opt.header["Content-Type"] = []string{"application/x-www-form-urlencoded; charset=utf-8"}
 	if opt.trace != nil {
@@ -390,7 +395,9 @@ func withJSONBody(method, url string, raw json.RawMessage, options ...Option) (b
 	}()
 
 	for _, f := range options {
-		f(opt)
+		if f != nil {
+			f(opt)
+		}
 	}
 	opt.header["Content-Type"] = []string{"application/json; charset=utf-8"}
 	if opt.trace != nil {

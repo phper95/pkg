@@ -61,7 +61,9 @@ func InitMysqlClient(clientName, username, password, addr, dbName string, option
 	}
 	opt := &option{}
 	for _, f := range options {
-		f(opt)
+		if f != nil {
+			f(opt)
+		}
 	}
 
 	db, err := dbConnect(username, password, addr, dbName, opt)

@@ -120,7 +120,9 @@ func WithDisableConsole() Option {
 func InitLogger(opts ...Option) {
 	opt := &option{level: DefaultLevel, fields: make(map[string]string)}
 	for _, f := range opts {
-		f(opt)
+		if f != nil {
+			f(opt)
+		}
 	}
 
 	timeLayout := DefaultTimeLayout
