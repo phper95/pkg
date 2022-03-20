@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"fmt"
 	"gitee.com/phper95/pkg/errors"
 	"gitee.com/phper95/pkg/timeutil"
 	"gitee.com/phper95/pkg/trace"
@@ -36,7 +37,7 @@ func InitRedis(clientName string, opt *redis.Options, trace *trace.Cache) error 
 	client := redis.NewClient(opt)
 
 	if err := client.Ping().Err(); err != nil {
-		return errors.Wrap(err, "ping redis err")
+		return errors.Wrap(err, "ping redis err addr : "+opt.Addr)
 	}
 	redisClients[clientName] = &Redis{
 		client: client,
@@ -55,7 +56,7 @@ func InitClusterRedis(clientName string, opt *redis.ClusterOptions, trace *trace
 	client := redis.NewClusterClient(opt)
 
 	if err := client.Ping().Err(); err != nil {
-		return errors.Wrap(err, "ping redis err")
+		return errors.Wrap(err, fmt.Sprintf("ping redis err  addrs : %v", opt.Addrs))
 	}
 	redisClients[clientName] = &Redis{
 		clusterClient: client,

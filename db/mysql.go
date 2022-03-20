@@ -68,7 +68,7 @@ func InitMysqlClient(clientName, username, password, addr, dbName string, option
 
 	db, err := dbConnect(username, password, addr, dbName, opt)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "addr : "+addr)
 	}
 	mysqlClients[clientName] = db
 	return nil
