@@ -21,11 +21,12 @@ type Docker struct {
 }
 
 type ContainerOption struct {
-	Name              string
-	ContainerFileName string
-	Options           map[string]string
-	MountVolumePath   string
-	PortExpose        string
+	Name       string
+	ImageName  string
+	Options    map[string]string
+	MountPath  string
+	LocalPath  string
+	PortExpose string
 }
 
 func (d *Docker) IsInstalled() bool {
@@ -133,7 +134,7 @@ func (d *Docker) getDockerRunOptions(c ContainerOption) []string {
 	for key, value := range c.Options {
 		args = append(args, []string{"-e", fmt.Sprintf("%s=%s", key, value)}...)
 	}
-	args = append(args, []string{"--tmpfs", c.MountVolumePath, c.ContainerFileName}...)
+	args = append(args, []string{"--tmpfs", c.MountPath, c.LocalPath}...)
 	dockerArgs := append([]string{"run", "-d", "--name", c.Name, "-p", portExpose}, args...)
 	return dockerArgs
 }
