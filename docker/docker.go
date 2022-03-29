@@ -25,7 +25,6 @@ type ContainerOption struct {
 	ImageName  string
 	Options    map[string]string
 	MountPath  string
-	LocalPath  string
 	PortExpose string
 }
 
@@ -134,7 +133,8 @@ func (d *Docker) getDockerRunOptions(c ContainerOption) []string {
 	for key, value := range c.Options {
 		args = append(args, []string{"-e", fmt.Sprintf("%s=%s", key, value)}...)
 	}
-	args = append(args, []string{"--tmpfs", c.MountPath, c.LocalPath}...)
+	args = append(args, []string{"--tmpfs", c.MountPath}...)
+	args = append(args, c.ImageName)
 	dockerArgs := append([]string{"run", "-d", "--name", c.Name, "-p", portExpose}, args...)
 	return dockerArgs
 }
