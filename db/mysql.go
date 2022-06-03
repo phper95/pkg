@@ -10,6 +10,7 @@ import (
 )
 
 // Predicate is a string that acts as a condition in the where clause
+
 type Predicate string
 type option struct {
 	MaxOpenConn       int
@@ -17,6 +18,15 @@ type option struct {
 	ConnMaxLifeSecond time.Duration
 }
 type Option func(*option)
+
+const (
+	DefaultMaxOpenConn       = 1000
+	DefaultMaxIdleConn       = 100
+	DefaultConnMaxLifeSecond = 30 * time.Minute
+	DefaultClient            = "default"
+	ReadClient               = "read"
+	WriteClient              = "write"
+)
 
 var (
 	EqualPredicate              = Predicate("=")
@@ -51,8 +61,26 @@ func WithConnMaxLifeSecond(connMaxLifeTime time.Duration) Option {
 		opt.ConnMaxLifeSecond = connMaxLifeTime
 	}
 }
-
-func InitMysqlClient(clientName, username, password, addr, dbName string, options ...Option) error {
+func InitMysqlClient(clientName, username, password, addr, dbName string) error {
+	if len(clientName) == 0 {
+		return errors.New("client name is empty")
+	}
+	if len(username) == 0 {
+		return errors.New("username is empty")
+	}
+	opt := &option{
+		MaxOpenConn:       DefaultMaxOpenConn,
+		MaxIdleConn:       DefaultMaxIdleConn,
+		ConnMaxLifeSecond: DefaultConnMaxLifeSecond,
+	}
+	db, err := dbConnect(username, password, addr, dbName, opt)
+	if err != nil {
+		return errors.Wrapf(err, "addr : "+addr)
+	}
+	mysqlClients[clientName] = db
+	return nil
+}
+func InitMysqlClientWithOptions(clientName, username, password, addr, dbName string, options ...Option) error {
 	if len(clientName) == 0 {
 		return errors.New("client name is empty")
 	}
@@ -118,6 +146,8 @@ func dbConnect(user, pass, addr, dbName string, option *option) (*gorm.DB, error
 	// 设置连接池 用于设置最大打开的连接数，默认值为0表示不限制.设置最大的连接数，可以避免并发太高导致连接mysql出现too many connections的错误。
 	if option.MaxOpenConn > 0 {
 		sqlDB.SetMaxOpenConns(option.MaxOpenConn)
+	} else {
+		sqlDB.SetMaxOpenConns(DefaultMaxOpenConn)
 	}
 
 	// 设置最大连接数 用于设置闲置的连接数.设置闲置的连接数则当开启的一个连接使用完成后可以放在池里等候下一次使用。
