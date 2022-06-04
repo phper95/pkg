@@ -3,29 +3,47 @@ package db
 import (
 	"fmt"
 	"gitee.com/phper95/pkg/errors"
+	"gitee.com/phper95/pkg/logger"
+	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	logger2 "gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
+	"log"
+	"os"
 	"time"
 )
 
 // Predicate is a string that acts as a condition in the where clause
-
+type DB struct {
+	*gorm.DB
+	ClientName string
+	Username   string
+	password   string
+	Addr       string
+	DBName     string
+}
 type Predicate string
 type option struct {
-	MaxOpenConn       int
-	MaxIdleConn       int
-	ConnMaxLifeSecond time.Duration
+	MaxOpenConn        int
+	MaxIdleConn        int
+	ConnMaxLifeSecond  time.Duration
+	PrepareStmt        bool
+	LogName            string
+	SlowLogMillisecond int64
 }
 type Option func(*option)
 
 const (
-	DefaultMaxOpenConn       = 1000
-	DefaultMaxIdleConn       = 100
-	DefaultConnMaxLifeSecond = 30 * time.Minute
-	DefaultClient            = "default"
-	ReadClient               = "read"
-	WriteClient              = "write"
+	DefaultMaxOpenConn        = 1000
+	DefaultMaxIdleConn        = 100
+	DefaultConnMaxLifeSecond  = 30 * time.Minute
+	DefaultLogName            = "gorm"
+	DefaultSlowLogMillisecond = 200
+	DefaultClient             = "default"
+	ReadClient                = "read"
+	WriteClient               = "write"
+	TxClient                  = "tx"
 )
 
 var (
@@ -37,12 +55,15 @@ var (
 	SmallerThanOrEqualPredicate = Predicate("<=")
 	LikePredicate               = Predicate("LIKE")
 )
-var mysqlClients = make(map[string]*gorm.DB)
+var mysqlClients = make(map[string]*DB)
 
 func (o *option) reset() {
 	o.MaxOpenConn = 0
 	o.MaxIdleConn = 0
 	o.ConnMaxLifeSecond = 0
+	o.LogName = DefaultLogName
+	o.PrepareStmt = false
+	o.SlowLogMillisecond = DefaultSlowLogMillisecond
 }
 func WithMaxOpenConn(maxOpenConn int) Option {
 	return func(opt *option) {
@@ -61,6 +82,25 @@ func WithConnMaxLifeSecond(connMaxLifeTime time.Duration) Option {
 		opt.ConnMaxLifeSecond = connMaxLifeTime
 	}
 }
+
+func WithLogName(logName string) Option {
+	return func(opt *option) {
+		opt.LogName = logName
+	}
+}
+
+func WithSlowLogMillisecond(slowLogMillisecond int64) Option {
+	return func(opt *option) {
+		opt.SlowLogMillisecond = slowLogMillisecond
+	}
+}
+
+func WithPrepareStmt(prepareStmt bool) Option {
+	return func(opt *option) {
+		opt.PrepareStmt = prepareStmt
+	}
+}
+
 func InitMysqlClient(clientName, username, password, addr, dbName string) error {
 	if len(clientName) == 0 {
 		return errors.New("client name is empty")
@@ -72,12 +112,28 @@ func InitMysqlClient(clientName, username, password, addr, dbName string) error 
 		MaxOpenConn:       DefaultMaxOpenConn,
 		MaxIdleConn:       DefaultMaxIdleConn,
 		ConnMaxLifeSecond: DefaultConnMaxLifeSecond,
+		PrepareStmt:       true,
 	}
 	db, err := dbConnect(username, password, addr, dbName, opt)
 	if err != nil {
 		return errors.Wrapf(err, "addr : "+addr)
 	}
-	mysqlClients[clientName] = db
+	mysqlClients[clientName] = &DB{
+		DB:         db,
+		ClientName: clientName,
+		Username:   username,
+		password:   password,
+		Addr:       addr,
+		DBName:     dbName,
+	}
+	err = db.Callback().Create().After("gorm:after_create").Register(DefaultLogName, afterLog)
+	if err != nil {
+		logger.Error("Register Create error", zap.Error(err))
+	}
+	err = db.Callback().Query().After("gorm:after_query").Register(DefaultLogName, afterLog)
+	if err != nil {
+		logger.Error("Register Query error", zap.Error(err))
+	}
 	return nil
 }
 func InitMysqlClientWithOptions(clientName, username, password, addr, dbName string, options ...Option) error {
@@ -98,10 +154,17 @@ func InitMysqlClientWithOptions(clientName, username, password, addr, dbName str
 	if err != nil {
 		return errors.Wrapf(err, "addr : "+addr)
 	}
-	mysqlClients[clientName] = db
+	mysqlClients[clientName] = &DB{
+		DB:         db,
+		ClientName: clientName,
+		Username:   username,
+		password:   password,
+		Addr:       addr,
+		DBName:     dbName,
+	}
 	return nil
 }
-func GetMysqlClient(clientName string) *gorm.DB {
+func GetMysqlClient(clientName string) *DB {
 	if client, ok := mysqlClients[clientName]; ok {
 		return client
 	}
@@ -109,7 +172,7 @@ func GetMysqlClient(clientName string) *gorm.DB {
 }
 
 func CloseMysqlClient(clientName string) error {
-	sqlDB, err := GetMysqlClient(clientName).DB()
+	sqlDB, err := GetMysqlClient(clientName).DB.DB()
 	if err != nil {
 		return err
 	}
@@ -124,10 +187,29 @@ func dbConnect(user, pass, addr, dbName string, option *option) (*gorm.DB, error
 		dbName,
 		true,
 		"Local")
+	if option.SlowLogMillisecond == 0 {
+		option.SlowLogMillisecond = DefaultSlowLogMillisecond
+	}
+	Log := logger2.New(log.New(os.Stdout, "\r\n", log.LstdFlags), logger2.Config{
+		SlowThreshold:             time.Duration(option.SlowLogMillisecond) * time.Millisecond,
+		LogLevel:                  logger2.Warn,
+		IgnoreRecordNotFoundError: true,
+		Colorful:                  true,
+	})
 
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		//为了确保数据一致性，GORM 会在事务里执行写入操作（创建、更新、删除）
+		//如果没有这方面的要求，可以设置SkipDefaultTransaction为true来禁用它。
+		SkipDefaultTransaction: true,
+		Logger:                 Log,
+		//执行任何 SQL 时都会创建一个 prepared statement 并将其缓存，以提高后续执行的效率
+		PrepareStmt: option.PrepareStmt,
 		NamingStrategy: schema.NamingStrategy{
+			//使用单数表名,默认为复数表名，即当model的结构体为User时，默认操作的表名为users
+			//设置	SingularTable: true 后当model的结构体为User时，操作的表名为user
 			SingularTable: true,
+
+			//TablePrefix: "pre_", //表前缀
 		},
 		//Logger: logger.Default.LogMode(logger.Info), // 日志配置
 	})
@@ -155,10 +237,22 @@ func dbConnect(user, pass, addr, dbName string, option *option) (*gorm.DB, error
 		sqlDB.SetMaxIdleConns(option.MaxIdleConn)
 	}
 
-	// 设置最大连接超时
+	// 设置最大连接超时时间
 	if option.ConnMaxLifeSecond > 0 {
 		sqlDB.SetConnMaxLifetime(time.Second * option.ConnMaxLifeSecond)
 	}
 
 	return db, nil
+}
+
+func afterLog(db *gorm.DB) {
+	err := db.Error
+	//ctx := db.Statement.Context
+	sql := db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...)
+	if err != nil {
+		logger.Error(sql, zap.Error(err))
+		return
+	} else {
+		logger.Info(sql)
+	}
 }
