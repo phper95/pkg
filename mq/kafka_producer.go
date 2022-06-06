@@ -333,8 +333,10 @@ func (asyncProducer *AsyncProducer) keepConnect() {
 
 //异步生产者状态检测
 func (asyncProducer *AsyncProducer) check() {
-	exit := false
-	for !exit {
+	defer func() {
+		logger.Warn("asyncProducer exited")
+	}()
+	for {
 		switch asyncProducer.Status {
 		case KafkaProducerDisconnected:
 			time.Sleep(time.Second * 5)
@@ -379,19 +381,19 @@ func (asyncProducer *AsyncProducer) Send(msg *sarama.ProducerMessage) error {
 	if asyncProducer.Status != KafkaProducerConnected {
 		return errors.New("kafka disconnected")
 	}
-
-	select {
-	case (*asyncProducer.AsyncProducer).Input() <- msg:
-	case <-time.After(asyncProducer.Config.Producer.Flush.Frequency * 2):
-		err = ErrProduceTimeout
-		// retry once
-		select {
-		case (*asyncProducer.AsyncProducer).Input() <- msg:
-			err = nil
-		default:
-		}
-
-	}
+	(*asyncProducer.AsyncProducer).Input() <- msg
+	//select {
+	//case (*asyncProducer.AsyncProducer).Input() <- msg:
+	//case <-time.After(5 * time.Second):
+	//	err = ErrProduceTimeout
+	//	// retry
+	//	select {
+	//	case (*asyncProducer.AsyncProducer).Input() <- msg:
+	//		err = nil
+	//	default:
+	//	}
+	//
+	//}
 	return err
 }
 

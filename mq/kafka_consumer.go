@@ -1,6 +1,7 @@
 package mq
 
 import (
+	"fmt"
 	"gitee.com/phper95/pkg/logger"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -36,19 +37,8 @@ type Consumer struct {
 	exit       bool
 }
 
-var KafkaConsumers = make(map[string]*Consumer, 0)
-
 //KafkaMessageHandler  消费者回调函数
 type KafkaMessageHandler func(message *sarama.ConsumerMessage) (bool, error)
-
-func GetkafkaConsumer(name string) *Consumer {
-	if consumer, ok := KafkaConsumers[name]; ok {
-		return consumer
-	} else {
-		logger.Error("InitKafkaConsumer must be called !")
-		return nil
-	}
-}
 
 //kafka 消费者配置
 func getKafkaDefaultConsumerConfig() (config *cluster.Config) {
@@ -160,6 +150,7 @@ func (c *Consumer) consumerMessage(f KafkaMessageHandler) {
 	for !c.exit {
 		if c.status != KafkaConsumerConnected {
 			time.Sleep(time.Second * 5)
+			logger.Warn("kafka consumer status " + c.status)
 			continue
 		}
 
@@ -180,7 +171,7 @@ func (c *Consumer) consumerMessage(f KafkaMessageHandler) {
 			select {
 			case msg, ok := <-c.consumer.Messages():
 				if ok {
-					//fmt.Fprintf(os.Stdout, "%s/%d/%d\t%s\t%s\n", msg.Topic, msg.Partition, msg.Offset, msg.Key, msg.Value)
+					fmt.Println(msg.Topic, msg.Partition, msg.Offset, msg.Key, msg.Value)
 					if commit, err := f(msg); commit {
 						c.consumer.MarkOffset(msg, "") // mark message as processed
 					} else {
