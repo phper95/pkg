@@ -13,6 +13,7 @@ type option struct {
 	MaxOpenConn       int
 	MaxIdleConn       int
 	ConnMaxLifeSecond time.Duration
+	QueryLogEnable    bool
 }
 type Option func(*option)
 type Client struct {
@@ -33,7 +34,13 @@ type Bulk struct {
 	requestSize   int
 }
 
-func InitClient(clientName string, urls []string, username string, password string, version int) error {
+func WithQueryLogEnable(enable bool) Option {
+	return func(opt *option) {
+		opt.QueryLogEnable = enable
+	}
+}
+
+func InitClient(clientName string, urls []string, username string, password string) error {
 	if clients == nil {
 		clients = map[string]*Client{}
 	}
@@ -53,7 +60,7 @@ func InitClient(clientName string, urls []string, username string, password stri
 	return nil
 }
 
-func InitClientWithOptions(clientName string, urls []string, username string, password string, version int, options ...Option) error {
+func InitClientWithOptions(clientName string, urls []string, username string, password string, options ...Option) error {
 	return nil
 }
 
