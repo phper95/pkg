@@ -14,24 +14,25 @@ type option struct {
 	MaxIdleConn       int
 	ConnMaxLifeSecond time.Duration
 	QueryLogEnable    bool
+	Bulk              Bulk
 }
 type Option func(*option)
 type Client struct {
-	name           string
-	urls           []string
-	queryLogEnable bool
-	username       string
+	Name           string
+	Urls           []string
+	QueryLogEnable bool
+	Username       string
 	password       string
-	version        int
-	bulk           Bulk
+	Version        int
+	Bulk           Bulk
 }
 
 type Bulk struct {
-	name          string
-	workers       int
-	flushInterval time.Duration
-	actionSize    int
-	requestSize   int
+	Name          string
+	Workers       int
+	FlushInterval time.Duration
+	ActionSize    int //每批提交的文档数
+	RequestSize   int //每批提交的文档大小
 }
 
 func WithQueryLogEnable(enable bool) Option {
@@ -45,12 +46,18 @@ func InitClient(clientName string, urls []string, username string, password stri
 		clients = map[string]*Client{}
 	}
 	client := &Client{
-		urls:           urls,
-		queryLogEnable: false,
-		username:       username,
+		Urls:           urls,
+		QueryLogEnable: false,
+		Username:       username,
 		password:       password,
-		version:        0,
-		bulk:           Bulk{},
+		Version:        0,
+		Bulk: Bulk{
+			Name:          clientName,
+			Workers:       3,
+			FlushInterval: 1,
+			ActionSize:    500,
+			RequestSize:   5 << 20, // 5 MB,
+		},
 	}
 	err := client.init()
 	if err != nil {
@@ -78,16 +85,16 @@ func GetClient(name string) *Client {
 func (c *Client) init() error {
 	temp, err := elastic.NewClient(
 		elastic.SetHealthcheckTimeoutStartup(10*time.Second),
-		elastic.SetURL(c.urls...),
+		elastic.SetURL(c.Urls...),
 		elastic.SetSniff(false),
-		elastic.SetBasicAuth(c.username, c.password),
+		elastic.SetBasicAuth(c.Username, c.password),
 	)
 	if err != nil {
 		return err
 	}
 
-	if c.name == "" {
-		c.bulkName = "default-processor"
+	if c.Bulk.Name == "" {
+		c.Bulk.Name = c.Name
 	}
 
 	if c.bulkWorkers <= 0 {

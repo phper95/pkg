@@ -102,6 +102,29 @@ func main() {
 	ormDB.Where(&user).Find(&users)
 	fmt.Printf("%+v", users)
 
+	//只获取指定字段
+	//方式1
+	ormDB.Select("name", "email").Find(&user)
+	fmt.Printf("指定字段%+v", users)
+	//方式2 通过定义结构体来限制需要获取的字段
+	type APIUser struct {
+		ID   uint
+		Name string
+	}
+	ormDB.Model(&User{}).Limit(5).Find(&APIUser{}).Scan(&users)
+
+	//执行原生sql
+	//查询
+	var userRes User
+	err := ormDB.Raw("select * from user where id = ?", 1).Scan(&userRes).Error
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(userRes)
+
+	ormDB.Exec("")
+
+	//事务的使用
 	//user1 := User{
 	//	Name:     "user1",
 	//	Age:      0,
