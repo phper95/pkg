@@ -146,6 +146,7 @@ func InitAsyncKafkaProducer(name string, hosts []string, config *sarama.Config) 
 		asyncProducer.Status = KafkaProducerConnected
 		logger.Info("AsyncKakfaProducer  connected name" + name)
 	}
+
 	go asyncProducer.keepConnect()
 	go asyncProducer.check()
 	kafkaAsyncProducers[name] = asyncProducer
