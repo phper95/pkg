@@ -6,6 +6,7 @@ import (
 	"github.com/eapache/go-resiliency/breaker"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
+	"log"
 	"os"
 	"os/signal"
 	"sync"
@@ -42,6 +43,12 @@ type AsyncProducer struct {
 	AsyncProducer *sarama.AsyncProducer
 }
 
+type stdLogger interface {
+	Print(v ...interface{})
+	Printf(format string, v ...interface{})
+	Println(v ...interface{})
+}
+
 const (
 	//生产者已连接
 	KafkaProducerConnected string = "connected"
@@ -58,7 +65,12 @@ var (
 	ErrProduceTimeout   = errors.New("push message timeout")
 	kafkaSyncProducers  = make(map[string]*SyncProducer)
 	kafkaAsyncProducers = make(map[string]*AsyncProducer)
+	KafkaStdLogger      stdLogger
 )
+
+func init() {
+	KafkaStdLogger = log.New(os.Stdout, "[kafka] ", log.LstdFlags|log.Lshortfile)
+}
 
 func KafkaMsgValueEncoder(value []byte) sarama.Encoder {
 	return sarama.ByteEncoder(value)
@@ -157,7 +169,7 @@ func GetKafkaSyncProducer(name string) *SyncProducer {
 	if producer, ok := kafkaSyncProducers[name]; ok {
 		return producer
 	} else {
-		logger.Error("InitSyncKafkaProducer must be called !")
+		KafkaStdLogger.Println("InitSyncKafkaProducer must be called !")
 		return nil
 	}
 }
@@ -166,7 +178,7 @@ func GetKafkaAsyncProducer(name string) *AsyncProducer {
 	if producer, ok := kafkaAsyncProducers[name]; ok {
 		return producer
 	} else {
-		logger.Error("InitAsyncKafkaProducer must be called !")
+		KafkaStdLogger.Println("InitAsyncKafkaProducer must be called !")
 		return nil
 	}
 }
