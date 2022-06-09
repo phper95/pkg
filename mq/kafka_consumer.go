@@ -183,7 +183,7 @@ func (c *Consumer) consumerMessage(f KafkaMessageHandler) {
 			case err := <-c.consumer.Errors():
 				logger.Error("kafka consumer msg error ", zap.Error(err))
 				//需要捕获 kafka 中断信息，尝试重新连接 kafka
-				if errors.As(err, sarama.ErrBrokerNotAvailable) {
+				if errors.Is(err, sarama.ErrOutOfBrokers) || errors.Is(err, sarama.ErrNotConnected) {
 					c.statusLock.Lock()
 					if c.status == KafkaConsumerConnected {
 						c.status = KafkaConsumerDisconnected

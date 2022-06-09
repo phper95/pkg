@@ -232,10 +232,15 @@ func (syncProducer *SyncProducer) check() {
 		}
 		select {
 		case <-signals:
-			if err := (*syncProducer.SyncProducer).Close(); err != nil {
-				logger.Error("kafka syncProducer close error", zap.Error(err))
-			}
+			syncProducer.StatusLock.Lock()
+			//if (*syncProducer.SyncProducer) != nil {
+			//	err := (*syncProducer.SyncProducer).Close()
+			//	if err != nil {
+			//		logger.Error("kafka syncProducer close error", zap.Error(err))
+			//	}
+			//}
 			syncProducer.Status = KafkaProducerClosed
+			syncProducer.StatusLock.Unlock()
 			return
 		}
 	}
@@ -283,11 +288,26 @@ func (syncProducer *SyncProducer) Send(msg *sarama.ProducerMessage) (partition i
 
 //检查kafka连接状态,如果断开链接则尝试重连
 func (asyncProducer *AsyncProducer) keepConnect() {
+	defer func() {
+		logger.Warn("asyncProducer keepConnect exited")
+	}()
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	for {
 		if asyncProducer.Status == KafkaProducerClosed {
 			return
 		}
 		select {
+		case s := <-signals:
+			logger.Warn("kafka async producer receive system signal:" + s.String() + "; name:" + asyncProducer.Name)
+			//if (*asyncProducer.AsyncProducer) != nil {
+			//	err := (*asyncProducer.AsyncProducer).Close()
+			//	if err != nil {
+			//		logger.Error("kafka syncProducer close error", zap.Error(err))
+			//	}
+			//}
+			asyncProducer.Status = KafkaProducerClosed
+			return
 		case <-asyncProducer.ReConnect:
 			if asyncProducer.Status != KafkaProducerDisconnected {
 				break
@@ -334,7 +354,7 @@ func (asyncProducer *AsyncProducer) keepConnect() {
 //异步生产者状态检测
 func (asyncProducer *AsyncProducer) check() {
 	defer func() {
-		logger.Warn("asyncProducer exited")
+		logger.Warn("asyncProducer check exited")
 	}()
 	for {
 		switch asyncProducer.Status {
@@ -354,7 +374,7 @@ func (asyncProducer *AsyncProducer) check() {
 				logger.Info("Success produce message  ", zap.Any(msg.Topic, msg.Value))
 			case err := <-(*asyncProducer.AsyncProducer).Errors():
 				logger.Error("message send error", zap.Error(err))
-				if errors.As(err, sarama.ErrBrokerNotAvailable) {
+				if errors.Is(err, sarama.ErrOutOfBrokers) || errors.Is(err, sarama.ErrNotConnected) {
 					// 连接中断触发重连，捕捉不到 EOF
 					asyncProducer.StatusLock.Lock()
 					if asyncProducer.Status == KafkaProducerConnected {
@@ -364,10 +384,13 @@ func (asyncProducer *AsyncProducer) check() {
 					asyncProducer.StatusLock.Unlock()
 				}
 			case s := <-signals:
-				logger.Warn("kafka async producer receive system signal" + s.String() + "name" + asyncProducer.Name)
-				if err := (*asyncProducer.AsyncProducer).Close(); err != nil {
-					logger.Error("kafka asyncProducer close error", zap.Error(err))
-				}
+				logger.Warn("kafka async producer receive system signal:" + s.String() + "; name:" + asyncProducer.Name)
+				//if (*asyncProducer.AsyncProducer) != nil {
+				//	err := (*asyncProducer.AsyncProducer).Close()
+				//	if err != nil {
+				//		logger.Error("kafka syncProducer close error", zap.Error(err))
+				//	}
+				//}
 				asyncProducer.Status = KafkaProducerClosed
 				return
 			}

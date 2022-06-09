@@ -7,19 +7,19 @@ import (
 	"time"
 )
 
-const (
-	host  = "10.13.149.18:9092"
+var (
+	hosts = []string{"192.168.1.6:9091"}
 	topic = "test"
 )
 
 func main() {
 	produceAsyncMsg()
 	//produceSyncMsg()
-	//consumeMsg()
+	consumeMsg()
 }
 
 func produceAsyncMsg() {
-	err := mq.InitAsyncKafkaProducer(mq.DefaultKafkaAsyncProducer, []string{host}, nil)
+	err := mq.InitAsyncKafkaProducer(mq.DefaultKafkaAsyncProducer, hosts, nil)
 	if err != nil {
 		fmt.Println("InitAsyncKafkaProducer error", err)
 	}
@@ -33,7 +33,7 @@ func produceAsyncMsg() {
 	time.Sleep(3 * time.Second)
 }
 func produceSyncMsg() {
-	err := mq.InitSyncKafkaProducer(mq.DefaultKafkaSyncProducer, []string{host}, nil)
+	err := mq.InitSyncKafkaProducer(mq.DefaultKafkaSyncProducer, hosts, nil)
 	if err != nil {
 		fmt.Println("InitSyncKafkaProducer error", err)
 	}
@@ -46,7 +46,7 @@ func produceSyncMsg() {
 }
 
 func consumeMsg() {
-	_, err := mq.StartKafkaConsumer([]string{host}, []string{topic}, "test-group", nil, msgHandler)
+	_, err := mq.StartKafkaConsumer(hosts, []string{topic}, "test-group", nil, msgHandler)
 	if err != nil {
 		fmt.Println(err)
 	}
