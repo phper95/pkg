@@ -128,7 +128,7 @@ func (c *Consumer) keepConnect() {
 					break breakLoop
 				case breaker.ErrBreakerOpen:
 					logger.Warn("kafka  consumer connect fail, broker is open")
-					//10 分钟之后，促发重新重联，此时熔断器刚好 half close
+					//5 s之后，促发重新重连接，此时熔断器刚好 half close
 					if c.status == KafkaConsumerDisconnected {
 						time.AfterFunc(5*time.Second, func() {
 							c.reConnect <- true

@@ -18,7 +18,7 @@ var (
 func main() {
 	produceAsyncMsg()
 	//produceSyncMsg()
-	consumeMsg()
+	//consumeMsg()
 }
 
 type Msg struct {
@@ -34,7 +34,7 @@ func produceAsyncMsg() {
 	}
 	msg := Msg{
 		ID:       1,
-		Name:     "test name sync",
+		Name:     "test name async",
 		CreateAt: time.Now().Unix(),
 	}
 	msgBody, _ := json.Marshal(msg)
@@ -56,15 +56,15 @@ func produceSyncMsg() {
 
 	msg := Msg{
 		ID:       2,
-		Name:     "test name async",
+		Name:     "test name sync",
 		CreateAt: time.Now().Unix(),
 	}
 	msgBody, _ := json.Marshal(msg)
-	_, _, err = mq.GetKafkaSyncProducer(mq.DefaultKafkaSyncProducer).Send(&sarama.ProducerMessage{Topic: topic, Value: mq.KafkaMsgValueEncoder(msgBody)})
+	partion, offset, err := mq.GetKafkaSyncProducer(mq.DefaultKafkaSyncProducer).Send(&sarama.ProducerMessage{Topic: topic, Value: mq.KafkaMsgValueEncoder(msgBody)})
 	if err != nil {
 		fmt.Println("Send msg error", err)
 	} else {
-		fmt.Println("Send msg success")
+		fmt.Println("Send msg success partion ", partion, "offset", offset)
 	}
 }
 

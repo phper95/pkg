@@ -117,7 +117,7 @@ func InitSyncKafkaProducer(name string, hosts []string, config *sarama.Config) e
 		syncProducer.ReConnect = make(chan bool)
 		syncProducer.SyncProducer = &producer
 		syncProducer.Status = KafkaProducerConnected
-		logger.Info("SyncKakfaProducer connected name" + name)
+		logger.Info("SyncKakfaProducer connected name " + name)
 	}
 	go syncProducer.keepConnect()
 	go syncProducer.check()
@@ -144,7 +144,7 @@ func InitAsyncKafkaProducer(name string, hosts []string, config *sarama.Config) 
 		asyncProducer.ReConnect = make(chan bool)
 		asyncProducer.AsyncProducer = &producer
 		asyncProducer.Status = KafkaProducerConnected
-		logger.Info("AsyncKakfaProducer  connected name" + name)
+		logger.Info("AsyncKakfaProducer  connected name " + name)
 	}
 
 	go asyncProducer.keepConnect()
@@ -183,7 +183,7 @@ func (syncProducer *SyncProducer) keepConnect() {
 				break
 			}
 
-			logger.Warn("kafka syncProducer ReConnecting... name" + syncProducer.Name)
+			logger.Warn("kafka syncProducer ReConnecting... name " + syncProducer.Name)
 			var producer sarama.SyncProducer
 		syncBreakLoop:
 			for {
@@ -255,7 +255,7 @@ func (syncProducer *SyncProducer) SendMessages(mses []*sarama.ProducerMessage) (
 	errs = (*syncProducer.SyncProducer).SendMessages(mses).(sarama.ProducerErrors)
 	for _, err := range errs {
 		//触发重连
-		if err.Error() == "EOF" {
+		if errors.Is(err, sarama.ErrBrokerNotAvailable) {
 			syncProducer.StatusLock.Lock()
 			if syncProducer.Status == KafkaProducerConnected {
 				syncProducer.Status = KafkaProducerDisconnected
@@ -276,7 +276,7 @@ func (syncProducer *SyncProducer) Send(msg *sarama.ProducerMessage) (partition i
 	if err == nil {
 		return
 	}
-	if errors.As(err, sarama.ErrBrokerNotAvailable) {
+	if errors.Is(err, sarama.ErrBrokerNotAvailable) {
 		syncProducer.StatusLock.Lock()
 		if syncProducer.Status == KafkaProducerConnected {
 			syncProducer.Status = KafkaProducerDisconnected
