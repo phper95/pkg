@@ -1,9 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"gitee.com/phper95/pkg/logger"
 	"gitee.com/phper95/pkg/mq"
 	"github.com/Shopify/sarama"
+	"go.uber.org/zap"
 	"time"
 )
 
@@ -18,12 +21,25 @@ func main() {
 	consumeMsg()
 }
 
+type Msg struct {
+	ID       int64  `json:"id"`
+	Name     string `json:"name"`
+	CreateAt int64  `json:"create_at"`
+}
+
 func produceAsyncMsg() {
 	err := mq.InitAsyncKafkaProducer(mq.DefaultKafkaAsyncProducer, hosts, nil)
 	if err != nil {
 		fmt.Println("InitAsyncKafkaProducer error", err)
 	}
-	err = mq.GetKafkaAsyncProducer(mq.DefaultKafkaAsyncProducer).Send(&sarama.ProducerMessage{Topic: topic, Value: mq.KafkaMsgValueEncoder([]byte("test msg"))})
+	msg := Msg{
+		ID:       1,
+		Name:     "test name sync",
+		CreateAt: time.Now().Unix(),
+	}
+	msgBody, _ := json.Marshal(msg)
+
+	err = mq.GetKafkaAsyncProducer(mq.DefaultKafkaAsyncProducer).Send(&sarama.ProducerMessage{Topic: topic, Value: mq.KafkaMsgValueEncoder(msgBody)})
 	if err != nil {
 		fmt.Println("Send msg error", err)
 	} else {
@@ -37,7 +53,14 @@ func produceSyncMsg() {
 	if err != nil {
 		fmt.Println("InitSyncKafkaProducer error", err)
 	}
-	_, _, err = mq.GetKafkaSyncProducer(mq.DefaultKafkaSyncProducer).Send(&sarama.ProducerMessage{Topic: topic, Value: mq.KafkaMsgValueStrEncoder("test msg")})
+
+	msg := Msg{
+		ID:       2,
+		Name:     "test name async",
+		CreateAt: time.Now().Unix(),
+	}
+	msgBody, _ := json.Marshal(msg)
+	_, _, err = mq.GetKafkaSyncProducer(mq.DefaultKafkaSyncProducer).Send(&sarama.ProducerMessage{Topic: topic, Value: mq.KafkaMsgValueEncoder(msgBody)})
 	if err != nil {
 		fmt.Println("Send msg error", err)
 	} else {
@@ -55,5 +78,13 @@ func consumeMsg() {
 
 func msgHandler(message *sarama.ConsumerMessage) (bool, error) {
 	fmt.Println("消费消息:", "topic:", message.Topic, "Partition:", message.Partition, "Offset:", message.Offset, "value:", string(message.Value))
+	msg := Msg{}
+	err := json.Unmarshal(message.Value, &msg)
+	if err != nil {
+		//解析不了的消息怎么处理？
+		logger.Error("Unmarshal error", zap.Error(err))
+		return true, nil
+	}
+	fmt.Println("msg : ", msg)
 	return true, nil
 }

@@ -1,7 +1,6 @@
 package mq
 
 import (
-	"fmt"
 	"gitee.com/phper95/pkg/logger"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -171,7 +170,7 @@ func (c *Consumer) consumerMessage(f KafkaMessageHandler) {
 			select {
 			case msg, ok := <-c.consumer.Messages():
 				if ok {
-					fmt.Println(msg.Topic, msg.Partition, msg.Offset, msg.Key, msg.Value)
+
 					if commit, err := f(msg); commit {
 						c.consumer.MarkOffset(msg, "") // mark message as processed
 					} else {
@@ -200,7 +199,10 @@ func (c *Consumer) consumerMessage(f KafkaMessageHandler) {
 				c.statusLock.Lock()
 				c.exit = true
 				//退出前先安全关闭
-				c.consumer.Close()
+				err := c.consumer.Close()
+				if err != nil {
+					logger.Error("consumer.Close error", zap.Error(err))
+				}
 				c.statusLock.Unlock()
 				break ConsumerLoop
 			}

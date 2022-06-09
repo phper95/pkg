@@ -251,8 +251,6 @@ func afterLog(db *gorm.DB) {
 	sql := db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...)
 	if err != nil {
 		logger.Error(sql, zap.Error(err))
-		return
-	} else {
-		logger.Info(sql)
 	}
+	fmt.Println("[ SQL语句 ]", sql)
 }
