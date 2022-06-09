@@ -1,13 +1,12 @@
 package db
 
 import (
+	"context"
 	"fmt"
 	"gitee.com/phper95/pkg/errors"
-	"gitee.com/phper95/pkg/logger"
-	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	logger2 "gorm.io/gorm/logger"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"log"
 	"os"
@@ -23,7 +22,7 @@ type DB struct {
 	Addr       string
 	DBName     string
 }
-type Predicate string
+
 type option struct {
 	MaxOpenConn        int
 	MaxIdleConn        int
@@ -31,8 +30,15 @@ type option struct {
 	PrepareStmt        bool
 	LogName            string
 	SlowLogMillisecond int64
+	EnableSqlLog       bool
 }
 type Option func(*option)
+
+type stdLogger interface {
+	Print(v ...interface{})
+	Printf(format string, v ...interface{})
+	Println(v ...interface{})
+}
 
 const (
 	DefaultMaxOpenConn        = 1000
@@ -47,16 +53,13 @@ const (
 )
 
 var (
-	EqualPredicate              = Predicate("=")
-	NotEqualPredicate           = Predicate("<>")
-	GreaterThanPredicate        = Predicate(">")
-	GreaterThanOrEqualPredicate = Predicate(">=")
-	SmallerThanPredicate        = Predicate("<")
-	SmallerThanOrEqualPredicate = Predicate("<=")
-	LikePredicate               = Predicate("LIKE")
+	mysqlClients  = make(map[string]*DB)
+	MysqltdLogger stdLogger
 )
-var mysqlClients = make(map[string]*DB)
 
+func init() {
+	MysqltdLogger = log.New(os.Stdout, "[Gorm] ", log.LstdFlags|log.Lshortfile)
+}
 func (o *option) reset() {
 	o.MaxOpenConn = 0
 	o.MaxIdleConn = 0
@@ -100,6 +103,11 @@ func WithPrepareStmt(prepareStmt bool) Option {
 		opt.PrepareStmt = prepareStmt
 	}
 }
+func WithEnableSqlLog(enableSqlLog bool) Option {
+	return func(opt *option) {
+		opt.EnableSqlLog = enableSqlLog
+	}
+}
 
 func InitMysqlClient(clientName, username, password, addr, dbName string) error {
 	if len(clientName) == 0 {
@@ -128,11 +136,11 @@ func InitMysqlClient(clientName, username, password, addr, dbName string) error 
 	}
 	err = db.Callback().Create().After("gorm:after_create").Register(DefaultLogName, afterLog)
 	if err != nil {
-		logger.Error("Register Create error", zap.Error(err))
+		MysqltdLogger.Print("Register Create error", err)
 	}
 	err = db.Callback().Query().After("gorm:after_query").Register(DefaultLogName, afterLog)
 	if err != nil {
-		logger.Error("Register Query error", zap.Error(err))
+		MysqltdLogger.Print("Register Query error", err)
 	}
 	return nil
 }
@@ -190,9 +198,9 @@ func dbConnect(user, pass, addr, dbName string, option *option) (*gorm.DB, error
 	if option.SlowLogMillisecond == 0 {
 		option.SlowLogMillisecond = DefaultSlowLogMillisecond
 	}
-	Log := logger2.New(log.New(os.Stdout, "\r\n", log.LstdFlags), logger2.Config{
+	Log := logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags), logger.Config{
 		SlowThreshold:             time.Duration(option.SlowLogMillisecond) * time.Millisecond,
-		LogLevel:                  logger2.Warn,
+		LogLevel:                  logger.Warn,
 		IgnoreRecordNotFoundError: true,
 		Colorful:                  true,
 	})
@@ -219,7 +227,7 @@ func dbConnect(user, pass, addr, dbName string, option *option) (*gorm.DB, error
 	}
 
 	db.Set("gorm:table_options", "CHARSET=utf8mb4")
-
+	db.Logger.LogMode()
 	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, err
@@ -250,7 +258,8 @@ func afterLog(db *gorm.DB) {
 	//ctx := db.Statement.Context
 	sql := db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...)
 	if err != nil {
-		logger.Error(sql, zap.Error(err))
+		MysqltdLogger.Print(sql, err)
 	}
+	db.Logger.Trace(context.Background())
 	fmt.Println("[ SQL语句 ]", sql)
 }
