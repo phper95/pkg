@@ -16,9 +16,9 @@ var (
 )
 
 func main() {
-	produceAsyncMsg()
+	//produceAsyncMsg()
 	//produceSyncMsg()
-	//consumeMsg()
+	consumeMsg()
 }
 
 type Msg struct {

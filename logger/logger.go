@@ -202,7 +202,7 @@ func GetLogger() *zap.Logger {
 }
 func setLogger() {
 	if logger == nil {
-		logger, _ = zap.NewProduction()
+		logger, _ = zap.NewProduction(zap.AddStacktrace(zapcore.LevelEnabler(zapcore.ErrorLevel)))
 	}
 }
 
