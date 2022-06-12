@@ -2,9 +2,7 @@ package es
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/olivere/elastic/v7"
-	"io"
 	"log"
 	"os"
 	"sync"
@@ -12,7 +10,6 @@ import (
 )
 
 var clients map[string]*Client
-var mutex sync.Mutex
 var EStdLogger stdLogger
 
 type stdLogger interface {
@@ -21,11 +18,10 @@ type stdLogger interface {
 	Println(v ...interface{})
 }
 type option struct {
-	MaxOpenConn       int
-	MaxIdleConn       int
-	ConnMaxLifeSecond time.Duration
-	QueryLogEnable    bool
-	Bulk              Bulk
+	QueryLogEnable             bool
+	GlobalSlowQueryMillisecond int64
+	Bulk                       *Bulk
+	DebugMode                  bool
 }
 type Option func(*option)
 type Client struct {
@@ -34,10 +30,13 @@ type Client struct {
 	QueryLogEnable bool
 	Username       string
 	password       string
-	Version        int
-	Bulk           Bulk
+	Bulk           *Bulk
 	Client         *elastic.Client
 	BulkProcessor  *elastic.BulkProcessor
+	DebugMode      bool
+	//本地缓存已经创建的索引，用于加速索引是否存在的判断
+	CachedIndices sync.Map
+	lock          sync.Mutex
 }
 
 type Bulk struct {
@@ -64,7 +63,13 @@ func WithQueryLogEnable(enable bool) Option {
 	}
 }
 
-func WithBulk(bulk Bulk) Option {
+func WithSlowQueryLogMillisecond(slowQueryMillisecond int64) Option {
+	return func(opt *option) {
+		opt.GlobalSlowQueryMillisecond = slowQueryMillisecond
+	}
+}
+
+func WithBulk(bulk *Bulk) Option {
 	return func(opt *option) {
 		opt.Bulk = bulk
 	}
@@ -72,18 +77,20 @@ func WithBulk(bulk Bulk) Option {
 
 func InitClient(clientName string, urls []string, username string, password string) error {
 	if clients == nil {
-		clients = map[string]*Client{}
+		clients = make(map[string]*Client, 0)
 	}
 	client := &Client{
 		Urls:           urls,
 		QueryLogEnable: false,
 		Username:       username,
 		password:       password,
-		Version:        0,
 		Bulk:           DefaultBulk(),
+		CachedIndices:  sync.Map{},
+		lock:           sync.Mutex{},
 	}
 	client.Bulk.Name = clientName
-	err := client.newClient()
+	options := getBaseOptions(username, password, urls...)
+	err := client.newClient(options)
 	if err != nil {
 		return err
 	}
@@ -91,12 +98,60 @@ func InitClient(clientName string, urls []string, username string, password stri
 	return nil
 }
 
+func getBaseOptions(username, password string, urls ...string) []elastic.ClientOptionFunc {
+	options := make([]elastic.ClientOptionFunc, 0)
+	options = append(options, elastic.SetURL(urls...))
+	options = append(options, elastic.SetBasicAuth(username, password))
+	options = append(options, elastic.SetHealthcheckTimeoutStartup(15*time.Second))
+	//开启Sniff，SDK会定期(默认15分钟一次)嗅探集群中全部节点，将全部节点都加入到连接列表中，
+	//后续新增的节点也会自动加入到可连接列表，但实际生产中我们可能会设置专门的协调节点，所以默认不开启嗅探
+	options = append(options, elastic.SetSniff(false))
+	options = append(options, elastic.SetErrorLog(EStdLogger))
+	return options
+}
+
 func InitClientWithOptions(clientName string, urls []string, username string, password string, options ...Option) error {
+	if clients == nil {
+		clients = make(map[string]*Client, 0)
+	}
+	client := &Client{
+		Urls:           urls,
+		QueryLogEnable: false,
+		Username:       username,
+		password:       password,
+		Bulk:           DefaultBulk(),
+		CachedIndices:  sync.Map{},
+		lock:           sync.Mutex{},
+	}
+	opt := &option{}
+	for _, f := range options {
+		if f != nil {
+			f(opt)
+		}
+	}
+	esOptions := getBaseOptions(username, password, urls...)
+
+	if opt.DebugMode {
+		esOptions = append(esOptions, elastic.SetInfoLog(EStdLogger))
+	}
+	client.QueryLogEnable = opt.QueryLogEnable
+	client.Bulk = opt.Bulk
+	if client.Bulk == nil {
+		client.Bulk = DefaultBulk()
+	}
+	err := client.newClient(esOptions)
+	if err != nil {
+		return err
+	}
+	clients[clientName] = client
 	return nil
 }
 
 func InitSimpleClient(urls []string, username, password string) error {
-	esClient, err := elastic.NewSimpleClient(elastic.SetURL(urls...), elastic.SetBasicAuth(username, password))
+	esClient, err := elastic.NewSimpleClient(
+		elastic.SetURL(urls...),
+		elastic.SetBasicAuth(username, password),
+		elastic.SetErrorLog(EStdLogger))
 	if err != nil {
 		return err
 	}
@@ -106,9 +161,11 @@ func InitSimpleClient(urls []string, username, password string) error {
 		QueryLogEnable: false,
 		Username:       username,
 		password:       password,
-		Version:        0,
 		Bulk:           DefaultBulk(),
+		CachedIndices:  sync.Map{},
+		lock:           sync.Mutex{},
 	}
+	client.Client = esClient
 	client.Bulk.Name = client.Name
 	client.BulkProcessor, err = esClient.BulkProcessor().
 		Name(client.Bulk.Name).
@@ -122,6 +179,9 @@ func InitSimpleClient(urls []string, username, password string) error {
 	if err != nil {
 		EStdLogger.Print("init bulkProcessor error ", err)
 	}
+	if clients == nil {
+		clients = make(map[string]*Client, 0)
+	}
 	clients[SimpleClient] = client
 	return nil
 }
@@ -130,6 +190,7 @@ func GetClient(name string) *Client {
 	if client, exist := clients[name]; exist {
 		return client
 	}
+	EStdLogger.Print("call init", name, "before !!!")
 	return nil
 }
 
@@ -137,16 +198,12 @@ func GetSimpleClient() *Client {
 	if client, exist := clients[SimpleClient]; exist {
 		return client
 	}
+	EStdLogger.Print("call init", SimpleClient, "before !!!")
 	return nil
 }
 
-func (c *Client) newClient() error {
-	client, err := elastic.NewClient(
-		elastic.SetHealthcheckTimeoutStartup(10*time.Second),
-		elastic.SetURL(c.Urls...),
-		elastic.SetSniff(false),
-		elastic.SetBasicAuth(c.Username, c.password),
-	)
+func (c *Client) newClient(options []elastic.ClientOptionFunc) error {
+	client, err := elastic.NewClient(options...)
 	if err != nil {
 		return err
 	}
@@ -162,9 +219,9 @@ func (c *Client) newClient() error {
 
 	//参数合理性校验
 
-	if c.Bulk.RequestSize > 100 {
+	if c.Bulk.RequestSize > 100*1024*1024 {
 		EStdLogger.Print("Bulk RequestSize must be smaller than 100MB; it will be ignored.")
-		c.Bulk.RequestSize = 100
+		c.Bulk.RequestSize = 100 * 1024 * 1024
 	}
 
 	if c.Bulk.ActionSize >= 10000 {
@@ -205,8 +262,8 @@ func defaultBulkFunc(executionId int64, requests []elastic.BulkableRequest, resp
 
 }
 
-func DefaultBulk() Bulk {
-	return Bulk{
+func DefaultBulk() *Bulk {
+	return &Bulk{
 		Workers:       3,
 		FlushInterval: 1,
 		ActionSize:    500,
@@ -227,90 +284,16 @@ func CloseAll() {
 	}
 }
 
+func (c *Client) AddIndexCache(indexName ...string) {
+	for _, index := range indexName {
+		c.CachedIndices.Store(index, true)
+	}
+}
+func (c *Client) DeleteIndexCache(indexName ...string) {
+	for _, index := range indexName {
+		c.CachedIndices.Delete(index)
+	}
+}
 func (c *Client) Close() error {
 	return c.BulkProcessor.Close()
-}
-
-func (c *Client) BoolQueryScroll(index []string, typeStr string, query elastic.Query, size int, orderBy []string, orderMethod []bool, highlight *elastic.Highlight, excludeSource []string, routings []string, profile bool, param map[string]interface{}, callback func(map[string]interface{}, map[string]interface{}) bool) error {
-	status = true
-	fetchSourceContext := elastic.NewFetchSourceContext(true)
-	searchSource := elastic.NewSearchSource()
-	searchSource = searchSource.FetchSourceContext(fetchSourceContext).Query(query)
-
-	if profile {
-		searchSource.Profile(profile)
-	}
-
-	for i := range orderBy {
-		if orderBy[i] != "" {
-			searchSource = searchSource.Sort(orderBy[i], orderMethod[i])
-		}
-	}
-
-	//searchSource = searchSource.From(from).Size(size)
-	if highlight != nil {
-		searchSource.Highlight(highlight)
-	}
-	if excludeSource != nil {
-		searchSource.FetchSourceContext(elastic.NewFetchSourceContext(true).Exclude(excludeSource...))
-	}
-	if c.QueryLogEnable {
-		// 调试模式打开查询原生log
-		src, _ := searchSource.Source()
-		data, err := json.Marshal(src)
-		EStdLogger.Print(string(data), err)
-	}
-	search := c.Client.Scroll(index...).SearchSource(searchSource).Pretty(false).Routing(routings...).Size(size)
-
-	for {
-		res, err := search.Do(context.Background())
-		if err == io.EOF {
-			break
-		}
-
-		if err != nil {
-			return err
-		}
-
-		if res == nil {
-			logs.Error("nil results !")
-			status = false
-			break
-		}
-		if res.Hits == nil {
-			logs.Error("expected results.Hits != nil; got nil")
-			status = false
-			break
-		}
-
-		if len(res.Hits.Hits) == 0 {
-			break
-		}
-		if res.TookInMillis >= 500 && profile {
-			logs.Warn("latency max search:", res.TookInMillis, index, typeStr, routings, boolQuery)
-
-		}
-
-		for _, hit := range res.Hits.Hits {
-			includeIndex := false
-			for _, v := range index {
-				if v == hit.Index {
-					includeIndex = true
-					break
-				}
-			}
-			if includeIndex {
-				item := make(map[string]interface{})
-				err := json.Unmarshal(hit.Source, &item)
-				if err != nil {
-					logs.Error(err)
-					continue
-				}
-
-				item["_id"] = hit.Id
-				callback(item, param)
-			}
-		}
-	}
-	return true
 }
