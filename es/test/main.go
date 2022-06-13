@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"gitee.com/phper95/pkg/es"
-	"github.com/olivere/elastic/v7"
 )
 
 const IndexName = "goods"
@@ -118,29 +116,33 @@ func main() {
 	//因为是异步处理，这里需要等待本地channel提交
 	time.Sleep(3 * time.Second)
 	*/
-	goods := make([]Goods, 0)
-	res, err := esClient.Query(ctx, IndexName, nil, elastic.NewMatchAllQuery(), 0, 20, es.WithEnableDSL(true), es.WithOrders(map[string]bool{"favorites": true}))
-	if err != nil {
-		es.EStdLogger.Print(err)
-	} else {
-		if res != nil {
-			for _, hit := range res.Hits.Hits {
-				g := Goods{}
-				docByte, err := hit.Source.MarshalJSON()
-				if err != nil {
-					es.EStdLogger.Print(err)
-				} else {
-					err = json.Unmarshal(docByte, &g)
+
+	/*
+		goods := make([]Goods, 0)
+		res, err := esClient.Query(ctx, IndexName, nil, elastic.NewMatchAllQuery(), 0, 20, es.WithEnableDSL(true), es.WithOrders(map[string]bool{"favorites": true}))
+		if err != nil {
+			es.EStdLogger.Print(err)
+		} else {
+			if res != nil {
+				for _, hit := range res.Hits.Hits {
+					g := Goods{}
+					docByte, err := hit.Source.MarshalJSON()
 					if err != nil {
 						es.EStdLogger.Print(err)
 					} else {
-						goods = append(goods, g)
+						err = json.Unmarshal(docByte, &g)
+						if err != nil {
+							es.EStdLogger.Print(err)
+						} else {
+							goods = append(goods, g)
+						}
 					}
 				}
 			}
+
 		}
 
-	}
-
-	es.EStdLogger.Printf("%+v", goods)
+		es.EStdLogger.Printf("%+v", goods)
+	
+	*/
 }

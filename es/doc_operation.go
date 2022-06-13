@@ -76,12 +76,7 @@ func (c *Client) BulkCreateDocs(ctx context.Context, indexName string, docs []*B
 		if len(doc.Routing) > 0 {
 			bulkCreateRequest.Routing(doc.Routing)
 		}
-		if doc.Version > 0 {
-			if len(doc.VersionType) == 0 {
-				doc.VersionType = DefaultVersionType
-			}
-			bulkCreateRequest.VersionType(doc.VersionType).Version(doc.Version)
-		}
+
 		bulkService.Add(bulkCreateRequest)
 	}
 	return bulkService.Do(ctx)
@@ -121,7 +116,7 @@ func (c *Client) BulkReplaceDocs(ctx context.Context, indexName string, docs []*
 //1.版本管理是完全实时的，不受搜索操作的近实时方面的影响
 //2.如果当前提供的版本号比实际的版本号大（或者实际文档不存在）就会成功写入，并设置为当前的版本号，否则返回失败（409状态码）
 func (c *Client) BulkCreateWithVersion(ctx context.Context, indexName, id, routing string, version int64, doc interface{}) {
-	bulkCreateRequest := elastic.NewBulkCreateRequest().Index(indexName).Doc(doc).VersionType(DefaultVersionType).Version(version)
+	bulkCreateRequest := elastic.NewBulkIndexRequest().Index(indexName).Doc(doc).VersionType(DefaultVersionType).Version(version)
 	if len(id) > 0 {
 		bulkCreateRequest.Id(id)
 	}

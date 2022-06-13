@@ -202,10 +202,6 @@ func (c *Client) ScrollQuery(ctx context.Context, index []string, typeStr string
 			EStdLogger.Print("expected results.Hits != nil; got nil")
 		}
 
-		if res.TookInMillis >= 500 {
-			EStdLogger.Print("latency max search:", res.TookInMillis, index, typeStr, routings, query)
-		}
-
 		if len(res.Hits.Hits) == 0 {
 			break
 		}
