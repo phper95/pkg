@@ -15,7 +15,11 @@ func (c *Client) IndexExists(ctx context.Context, indexName string, forceCheck b
 	}
 	//在ES中可以同时校验多个索引是否存在，校验多个索引时，
 	//只要有一个索引不存在，就会返回false，实际场景很少会用到，这里直接校验单索引
-	return c.Client.IndexExists(indexName).Do(ctx)
+	exists, err := c.Client.IndexExists(indexName).Do(ctx)
+	if exists {
+		c.CachedIndices.Store(indexName, true)
+	}
+	return exists, err
 
 }
 
@@ -34,5 +38,8 @@ func (c *Client) CreateIndex(ctx context.Context, indexName, bodyJson string, fo
 	}
 	// 如果重复创建会报错
 	_, err = c.Client.CreateIndex(indexName).BodyString(bodyJson).Do(ctx)
+	if err != nil {
+		c.CachedIndices.Store(indexName, true)
+	}
 	return err
 }
