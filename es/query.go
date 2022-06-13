@@ -21,8 +21,11 @@ type queryOption struct {
 	ExcludeFields        []string
 	IncludeFields        []string
 	SlowQueryMillisecond int64
+	Preference           string
 }
 type QueryOption func(queryOption *queryOption)
+
+const DefaultPreference = "_local"
 
 func WithOrders(orders map[string]bool) QueryOption {
 	return func(opt *queryOption) {
@@ -57,14 +60,25 @@ func WithExcludeFields(excludeFields []string) QueryOption {
 		opt.ExcludeFields = excludeFields
 	}
 }
+
 func WithSlowQueryMillisecond(slowQueryLogMillisecond int64) QueryOption {
 	return func(opt *queryOption) {
 		opt.SlowQueryMillisecond = slowQueryLogMillisecond
 	}
 }
 
+func WithPreference(preference string) QueryOption {
+	return func(opt *queryOption) {
+		opt.Preference = preference
+	}
+}
+
 func (c *Client) Get(ctx context.Context, indexName, id, routing string) (*elastic.GetResult, error) {
-	getService := c.Client.Get().Index(indexName).Id(id)
+
+	//由于副本分片也能提供数据查询，所以当查询请求能从本地分片获取数据时，就不需要转发到其他节点获取数据了，
+	//这样可以提高查询缓存命中率，减少跨节点的查询请求，
+	//sdk的默认策略是随机获取
+	getService := c.Client.Get().Index(indexName).Id(id).Preference(DefaultPreference)
 	if len(routing) > 0 {
 		getService.Routing(routing)
 	}
@@ -72,7 +86,7 @@ func (c *Client) Get(ctx context.Context, indexName, id, routing string) (*elast
 }
 
 func (c *Client) Mget(ctx context.Context, mgetItems []Mget) (*elastic.MgetResponse, error) {
-	multiGetService := c.Client.Mget()
+	multiGetService := c.Client.Mget().Preference(DefaultPreference)
 	multiGetItems := make([]*elastic.MultiGetItem, 0)
 	for _, item := range mgetItems {
 		multiGetItem := &elastic.MultiGetItem{}
@@ -116,7 +130,7 @@ func (c *Client) Query(ctx context.Context, indexName string, routings []string,
 	}
 	searchSource.Profile(queryOpt.Profile)
 
-	searchService := c.Client.Search(indexName).SearchSource(searchSource).IgnoreUnavailable(true)
+	searchService := c.Client.Search(indexName).SearchSource(searchSource).IgnoreUnavailable(true).Preference(DefaultPreference)
 	if len(routings) > 0 {
 		searchService.Routing(routings...)
 	}
@@ -165,7 +179,7 @@ func (c *Client) ScrollQuery(ctx context.Context, index []string, typeStr string
 	if c.DebugMode || c.QueryLogEnable || queryOpt.EnableDSL {
 		EStdLogger.Print("DSL : ", string(data), "routing: ", rs)
 	}
-	scrollService := c.Client.Scroll(index...).SearchSource(searchSource).Size(size)
+	scrollService := c.Client.Scroll(index...).SearchSource(searchSource).Size(size).Preference(DefaultPreference)
 	if len(routings) > 0 {
 		scrollService.Routing(routings...)
 	}

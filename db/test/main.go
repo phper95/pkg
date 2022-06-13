@@ -63,9 +63,13 @@ func main() {
 	ormDB := db.GetMysqlClient(db.DefaultClient).DB
 	ormDBTx := db.GetMysqlClient(db.TxClient).DB
 
+	//查看连接配置
+	sqlDB, _ := ormDB.DB()
+	db.MysqltdLogger.Printf("Stats : %+v", sqlDB.Stats())
+
 	//建表
 	if err := ormDB.AutoMigrate(&User{}); err != nil {
-		logger.Error("AutoMigrate user error", zap.Error(err))
+		db.MysqltdLogger.Print("AutoMigrate user error", err)
 	}
 
 	//自定义表名的另一种方式
@@ -100,12 +104,12 @@ func main() {
 	//查询时会忽略空值，o值，false和null值
 	users := make([]*User, 0)
 	ormDB.Where(&user).Find(&users)
-	fmt.Printf("%+v", users)
+	db.MysqltdLogger.Printf("%+v", users)
 
 	//只获取指定字段
 	//方式1
 	ormDB.Select("name", "email").Find(&user)
-	fmt.Printf("指定字段%+v", users)
+	db.MysqltdLogger.Print("指定字段%+v", users)
 	//方式2 通过定义结构体来限制需要获取的字段
 	type APIUser struct {
 		ID   uint
