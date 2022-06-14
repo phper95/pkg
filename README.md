@@ -1,7 +1,11 @@
 
 ## 简介
+## 介绍
 
-pkg 是一个基于Golang开发的第三方sdk，包含Golang开发的常用组件：
+`pkg` 是
+
+**Golang+Elasticsearch8构建海量数据高性能搜索服务最佳实践** 课程中基于Golang开发的第三方sdk，包含Golang开发的常用组件相关代码
+课程地址请看 [Golang+Elasticsearch8构建海量数据高性能搜索服务最佳实践](https://coding.imooc.com/class/579.html?mc_marking=bb86c9071ed9b7cf12612a2a85203372&mc_channel=hk)
 1. mysql
 2. redis
 3. elasticsearch

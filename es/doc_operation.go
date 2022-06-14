@@ -13,6 +13,7 @@ const (
 	VersionTypeInternal = "internal"
 	DefaultRefresh      = "false"
 	RefreshWaitFor      = "wait_for"
+	DefaultScriptLang   = "painless"
 )
 
 type BulkDoc struct {
@@ -177,10 +178,10 @@ func (c *Client) Update(ctx context.Context, indexName, id, routing string, upda
 	_, err := updateService.Doc(update).Do(ctx)
 	return err
 }
-func (c *Client) UpdateByQuery(ctx context.Context, indexName string, routing string, query elastic.Query, script *elastic.Script) (*elastic.BulkIndexByScrollResponse, error) {
-	updateByqueryService := c.Client.UpdateByQuery(indexName).Query(query).Script(script).Refresh(DefaultRefresh).ProceedOnVersionConflict()
-	if len(routing) > 0 {
-		updateByqueryService.Routing(routing)
+func (c *Client) UpdateByQuery(ctx context.Context, indexName string, routings []string, query elastic.Query, script string, scriptParams map[string]interface{}) (*elastic.BulkIndexByScrollResponse, error) {
+	updateByqueryService := c.Client.UpdateByQuery(indexName).Query(query).Script(elastic.NewScript(script).Params(scriptParams).Lang(DefaultScriptLang)).Refresh(DefaultRefresh).ProceedOnVersionConflict()
+	if len(routings) > 0 {
+		updateByqueryService.Routing(routings...)
 	}
 	return updateByqueryService.Do(ctx)
 }
