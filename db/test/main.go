@@ -126,7 +126,10 @@ func main() {
 	}
 	fmt.Println(userRes)
 
-	ormDB.Exec("")
+	err = ormDB.Exec("DROP TABLE user").Error
+	if err != nil {
+		db.MysqltdLogger.Print("DROP TABLE error", err)
+	}
 
 	//事务的使用
 	//user1 := User{
@@ -177,26 +180,29 @@ func main() {
 	//	logger.Error("Transaction error", zap.Error(err))
 	//}
 
-	user4 := User{
-		Name:     "user4",
-		Age:      0,
-		Birthday: nil,
-		Email:    "user4@qq.com",
-	}
+	/*
+		user4 := User{
+			Name:     "user4",
+			Age:      0,
+			Birthday: nil,
+			Email:    "user4@qq.com",
+		}
 
-	user5 := User{
-		Name:     "user5",
-		Age:      0,
-		Birthday: nil,
-		Email:    "user5@qq.com",
-	}
-	//检查点和回滚点
-	tx := ormDBTx.Begin()
-	tx.Create(&user4)
+		user5 := User{
+			Name:     "user5",
+			Age:      0,
+			Birthday: nil,
+			Email:    "user5@qq.com",
+		}
+		//检查点和回滚点
+		tx := ormDBTx.Begin()
+		tx.Create(&user4)
 
-	tx.SavePoint("step1")
-	tx.Create(&user5)
-	tx.RollbackTo("step1") // 回滚 user2
+		tx.SavePoint("step1")
+		tx.Create(&user5)
+		tx.RollbackTo("step1") // 回滚 user2
 
-	tx.Commit() // 最终仅提交 user4
+		tx.Commit() // 最终仅提交 user4
+
+	*/
 }

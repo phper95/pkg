@@ -1,7 +1,6 @@
 package db
 
 import (
-	"context"
 	"fmt"
 	"gitee.com/phper95/pkg/errors"
 	"gorm.io/driver/mysql"
@@ -13,7 +12,6 @@ import (
 	"time"
 )
 
-// Predicate is a string that acts as a condition in the where clause
 type DB struct {
 	*gorm.DB
 	ClientName string
@@ -198,7 +196,7 @@ func dbConnect(user, pass, addr, dbName string, option *option) (*gorm.DB, error
 	if option.SlowLogMillisecond == 0 {
 		option.SlowLogMillisecond = DefaultSlowLogMillisecond
 	}
-	Log := logger.New(log.New(os.Stdout, "\r\n", log.LstdFlags), logger.Config{
+	Log := logger.New(MysqltdLogger, logger.Config{
 		SlowThreshold:             time.Duration(option.SlowLogMillisecond) * time.Millisecond,
 		LogLevel:                  logger.Warn,
 		IgnoreRecordNotFoundError: true,
@@ -227,7 +225,6 @@ func dbConnect(user, pass, addr, dbName string, option *option) (*gorm.DB, error
 	}
 
 	db.Set("gorm:table_options", "CHARSET=utf8mb4")
-	db.Logger.LogMode()
 	sqlDB, err := db.DB()
 	if err != nil {
 		return nil, err
@@ -259,7 +256,8 @@ func afterLog(db *gorm.DB) {
 	sql := db.Dialector.Explain(db.Statement.SQL.String(), db.Statement.Vars...)
 	if err != nil {
 		MysqltdLogger.Print(sql, err)
+	} else {
+		fmt.Println("[ SQL语句 ]", sql)
 	}
-	db.Logger.Trace(context.Background())
-	fmt.Println("[ SQL语句 ]", sql)
+
 }
