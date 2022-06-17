@@ -1,6 +1,8 @@
 package routine
 
 import (
+	"context"
+	"fmt"
 	"gitee.com/phper95/pkg/errors"
 	"log"
 	"os"
@@ -281,19 +283,12 @@ func (self *Pool) Stop() {
 		routineLogger.Print("grpool[%v] when Pool.Stop() had [%v]jobs not-finish.",
 			self.Name, self.QueueLen())
 	}
-	//if grpoolMetrics != nil {
-	//	grpoolMetrics.updateCurrentGoroutine(self.Name, 0)
-	//	grpoolMetrics.updatePoolSize(self.Name, 0)
-	//	grpoolMetrics.close()
-	//}
-	self.ticker.Stop()
+
 	var done int64 = 0
 	for i := 0; i < self.numWorkers; i++ {
 		done += self.workers[i].Done
-		// routineLogger.Print("Pool.Stop(%v) Called.", i)
 	}
-	routineLogger.Print("--Stop--> grpool[%v] currGorountine[%v].Done=[%v] JobQueue.len=[%v]",
-		self.Name, self.currGorountine, done, self.QueueLen())
+	routineLogger.Print("Stop routine pool", self.Name, "currGorountine", self.currGorountine, "JobQueue len", self.QueueLen())
 }
 
 func (self *Pool) StopWait() {

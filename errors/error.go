@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"io"
+	"log"
 	"runtime"
 )
 
@@ -90,4 +91,20 @@ func WithStack(err error) Error {
 	}
 
 	return &item{msg: err.Error(), stack: callers()}
+}
+
+func Recover() {
+	e := recover()
+	if e != nil {
+		s := Stack(2)
+		log.Fatal("Panic: %v\nTraceback\r:%s", e, string(s))
+	}
+}
+
+func RecoverStackWithoutLF() {
+	e := recover()
+	if e != nil {
+		s := StackWithoutLF(3)
+		log.Fatal("Panic: %v Traceback:%s", e, string(s))
+	}
 }
