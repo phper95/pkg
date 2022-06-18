@@ -1,8 +1,7 @@
 package cache
 
 import (
-	"github.com/go-redis/redis/v7"
-	"pkg/compression"
+	"gitee.com/phper95/pkg/compression"
 	"testing"
 	"time"
 )
