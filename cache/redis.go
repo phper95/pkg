@@ -21,10 +21,61 @@ type Redis struct {
 }
 
 const (
-	MinIdleConns = 50
-	PoolSize     = 20
-	MaxRetries   = 3
+	DefaultRedisClient = "default-redis-client"
+	MinIdleConns       = 50
+	PoolSize           = 20
+	MaxRetries         = 3
 )
+
+func setDefaultOptions(opt *redis.Options) {
+	if opt.DialTimeout == 0 {
+		opt.DialTimeout = 2 * time.Second
+	}
+
+	if opt.ReadTimeout == 0 {
+		//默认值为3秒
+		opt.ReadTimeout = 2 * time.Second
+	}
+
+	if opt.ReadTimeout == 0 {
+		//默认值与ReadTimeout相等
+		opt.ReadTimeout = 2 * time.Second
+	}
+
+	if opt.PoolTimeout == 0 {
+		//默认为ReadTimeout + 1秒（4s）
+		opt.PoolTimeout = 10 * time.Second
+	}
+	if opt.IdleTimeout == 0 {
+		//默认值为5秒
+		opt.IdleTimeout = 10 * time.Second
+	}
+}
+
+func setDefaultClusterOptions(opt *redis.ClusterOptions) {
+	if opt.DialTimeout == 0 {
+		opt.DialTimeout = 2 * time.Second
+	}
+
+	if opt.ReadTimeout == 0 {
+		//默认值为3秒
+		opt.ReadTimeout = 2 * time.Second
+	}
+
+	if opt.ReadTimeout == 0 {
+		//默认值与ReadTimeout相等
+		opt.ReadTimeout = 2 * time.Second
+	}
+
+	if opt.PoolTimeout == 0 {
+		//默认为ReadTimeout + 1秒（4s）
+		opt.PoolTimeout = 10 * time.Second
+	}
+	if opt.IdleTimeout == 0 {
+		//默认值为5秒
+		opt.IdleTimeout = 10 * time.Second
+	}
+}
 
 func InitRedis(clientName string, opt *redis.Options, trace *trace.Cache) error {
 	if len(clientName) == 0 {
@@ -34,6 +85,8 @@ func InitRedis(clientName string, opt *redis.Options, trace *trace.Cache) error 
 	if len(opt.Addr) == 0 {
 		return errors.New("empty addr")
 	}
+
+	setDefaultOptions(opt)
 	client := redis.NewClient(opt)
 
 	if err := client.Ping().Err(); err != nil {
@@ -53,6 +106,9 @@ func InitClusterRedis(clientName string, opt *redis.ClusterOptions, trace *trace
 	if len(opt.Addrs) == 0 {
 		return errors.New("empty addrs")
 	}
+	setDefaultClusterOptions(opt)
+	//NewClusterClient执行过程中会连接redis集群并, 并尝试发送("cluster", "info")指令去进行多次连接,
+	//如果这里传入很多连接地址，并且连接地址都不可用的情况下会阻塞很长时间
 	client := redis.NewClusterClient(opt)
 
 	if err := client.Ping().Err(); err != nil {
@@ -69,7 +125,6 @@ func GetRedisClient(name string) *Redis {
 		return client
 	}
 	return nil
-
 }
 
 func GetRedisClusterClient(name string) *Redis {

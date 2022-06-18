@@ -1,5 +1,5 @@
-gitee.com/phper95/pkg/errors v0.0.0-20220617101954-d91cbcfc08f6 h1:hFX+PDIkH5yG1c2OI9siCW0YXFeTb9A9C/ft9WiAht8=
-gitee.com/phper95/pkg/errors v0.0.0-20220617101954-d91cbcfc08f6/go.mod h1:QjWVzI0aT0OcBninaydQjEOE7mwhhI5x9SmUOkxR1aY=
+gitee.com/phper95/pkg/errors v0.0.0-20220617103500-e4bd73d3626d h1:3WsFRioMZnOwxV1tS9qEj4GybT9005br7gvhicn9Wak=
+gitee.com/phper95/pkg/errors v0.0.0-20220617103500-e4bd73d3626d/go.mod h1:QjWVzI0aT0OcBninaydQjEOE7mwhhI5x9SmUOkxR1aY=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
