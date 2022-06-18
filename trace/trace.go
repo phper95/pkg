@@ -77,7 +77,7 @@ type Cache struct {
 	TraceTime             string      `json:"trace_time"`              // 时间，格式：2006-01-02 15:04:05
 	CMD                   string      `json:"cmd"`                     // 操作，SET/GET 等
 	Key                   string      `json:"key"`                     // Key
-	Value                 string      `json:"value,omitempty"`         // Value
+	Value                 interface{} `json:"value,omitempty"`         // Value
 	TTL                   float64     `json:"ttl,omitempty"`           // 超时时长(单位分)
 	CostMillisecond       int64       `json:"cost_millisecond"`        // 执行时长(单位ms)
 	SlowLoggerMillisecond int64       `json:"slow_logger_millisecond"` //慢查记录时间

@@ -135,7 +135,7 @@ func GetRedisClusterClient(name string) *Redis {
 }
 
 // Set set some <key,value> into redis
-func (r *Redis) Set(key, value string, ttl time.Duration) error {
+func (r *Redis) Set(key string, value interface{}, ttl time.Duration) error {
 	if len(key) == 0 {
 		return errors.New("empty key")
 	}
