@@ -33,5 +33,13 @@ func TestGet(t *testing.T) {
 	redisClient := GetRedisClient(DefaultRedisClient)
 	redisClient.Set(key, userByte, time.Minute)
 	val, err := redisClient.Get(key)
-	t.Log(val, err)
+	if err != nil {
+		t.Error("redisClient.Get error", val, err)
+	}
+	output := UserTest{}
+	err = compression.UnmarshalDataFromJsonWithGzip([]byte(val), &output)
+	if err != nil {
+		t.Error("UnmarshalDataFromJsonWithGzip error", val, err)
+	}
+	t.Log(output)
 }
