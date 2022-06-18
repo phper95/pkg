@@ -8,7 +8,7 @@
 
 # Test binary, built with `go test -c`
 *.test
-nosql/test/mongodb
+nosql/test/mongodb/*
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
