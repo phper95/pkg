@@ -132,14 +132,6 @@ func InitMysqlClient(clientName, username, password, addr, dbName string) error 
 		Addr:       addr,
 		DBName:     dbName,
 	}
-	err = db.Callback().Create().After("gorm:after_create").Register(DefaultLogName, afterLog)
-	if err != nil {
-		MysqltdLogger.Print("Register Create error", err)
-	}
-	err = db.Callback().Query().After("gorm:after_query").Register(DefaultLogName, afterLog)
-	if err != nil {
-		MysqltdLogger.Print("Register Query error", err)
-	}
 	return nil
 }
 func InitMysqlClientWithOptions(clientName, username, password, addr, dbName string, options ...Option) error {
@@ -247,6 +239,22 @@ func dbConnect(user, pass, addr, dbName string, option *option) (*gorm.DB, error
 		sqlDB.SetConnMaxLifetime(time.Second * option.ConnMaxLifeSecond)
 	}
 
+	err = db.Callback().Create().After("gorm:after_create").Register(DefaultLogName, afterLog)
+	if err != nil {
+		MysqltdLogger.Print("Register Create error", err)
+	}
+	err = db.Callback().Query().After("gorm:after_query").Register(DefaultLogName, afterLog)
+	if err != nil {
+		MysqltdLogger.Print("Register Query error", err)
+	}
+	err = db.Callback().Update().After("gorm:after_update").Register(DefaultLogName, afterLog)
+	if err != nil {
+		MysqltdLogger.Print("Register Update error", err)
+	}
+	err = db.Callback().Delete().After("gorm:after_delete").Register(DefaultLogName, afterLog)
+	if err != nil {
+		MysqltdLogger.Print("Register Delete error", err)
+	}
 	return db, nil
 }
 

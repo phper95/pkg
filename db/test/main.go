@@ -55,7 +55,7 @@ func main() {
 	initMysql()
 
 	ormDB := db.GetMysqlClient(db.DefaultClient).DB
-	ormDBTx := db.GetMysqlClient(db.TxClient).DB
+	//ormDBTx := db.GetMysqlClient(db.TxClient).DB
 
 	//查看连接配置
 	sqlDB, _ := ormDB.DB()
