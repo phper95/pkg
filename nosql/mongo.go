@@ -43,20 +43,15 @@ const (
 	DefaultConnectTimeout = 3 * time.Second
 )
 
-// InitMongo .
-func InitMongoClient(clientName, username, password, dbname string, addrs []string, mongoPoolLimit uint64) error {
+func InitMongoClient(clientName, username, password string, addrs []string, mongoPoolLimit uint64) error {
 	hosts := strings.Join(addrs, ",")
 	auth := ""
-	db := ""
 	if len(username) > 0 && len(password) > 0 {
 		auth = username + ":" + password + "@"
 	}
-	if len(dbname) > 0 {
-		db = "/" + dbname
-	}
 	// example mongodb://username:password@192.168.1.99:27017,192.168.1.88:27017,192.168.1.66:27017
-	// example with dbname mongodb://username:password@192.168.1.99:27017,192.168.1.88:27017,192.168.1.66:27017/dbname
-	mongoURL := fmt.Sprintf("mongodb://%s%s%s", auth, hosts, db)
+	mongoURL := fmt.Sprintf("mongodb://%s%s", auth, hosts)
+	//MongoStdLogger.Print("mongoURL : ", mongoURL)
 	opt := options.Client().ApplyURI(mongoURL)
 	//opt.SetMaxConnIdleTime(30 * time.Minute)   //指定连接可以保持空闲的最时间（默认无限制）
 	opt.SetMaxPoolSize(mongoPoolLimit)     //使用最大的连接数
@@ -85,6 +80,46 @@ func GetMongoClient(clientName string) *mgClient {
 	}
 	MongoStdLogger.Print("Call 'InitMongo' before!")
 	return nil
+}
+
+// example
+//InsertMany("db","table",bson.D{{"name", "Alice"}},bson.D{{"name", "Bob"}})
+func (client *mgClient) InsertMany(db string, table string, docs ...interface{}) error {
+	_, err := client.Database(db).Collection(table).InsertMany(getContext(), docs)
+	return err
+}
+
+// Upsert doc是bson格式
+func (client *mgClient) Upsert(db string, table string, filter bson.D, doc interface{}) error {
+	collection := client.Database(db).Collection(table)
+	//设置Upset模式
+	opts := options.FindOneAndUpdate().SetUpsert(true)
+	return collection.FindOneAndUpdate(getContext(), filter, bson.D{{"$set", doc}}, opts).Err()
+}
+
+func (client *mgClient) ReplaceOne(db string, table string, filter bson.D, doc interface{}) error {
+	collection := client.Database(db).Collection(table)
+
+	//设置Replace设置项
+	opts := options.Replace().SetUpsert(true)
+	_, err := collection.ReplaceOne(getContext(), filter, doc, opts)
+	return err
+}
+
+// example
+// filter := bson.D{{"_id", id}}
+//	update := bson.D{{"email", "newemail@example.com"}}
+func (client *mgClient) UpdateOne(db string, table string, filter bson.D, update interface{}) error {
+	_, err := client.Database(db).Collection(table).UpdateOne(getContext(), filter, bson.M{"$set": update}, nil)
+	return err
+}
+
+//example
+//filter := bson.D{{"birthday", today}}
+//update := bson.D{{"$inc", bson.D{{"age", 1}}}}
+func (client *mgClient) UpdateMany(db string, table string, filter bson.D, update interface{}) error {
+	_, err := client.Database(db).Collection(table).UpdateMany(getContext(), filter, update, nil)
+	return err
 }
 
 func (client *mgClient) Find(db string, table string, filter bson.D, result interface{}) (bool, error) {
@@ -234,47 +269,6 @@ func (client *mgClient) AggregateUseCursor(db string, table string, queries []bs
 			cursorCallbackFunc(rowType, err)
 		}
 	}
-	return err
-
-}
-
-// example
-//InsertMany("db","table",bson.D{{"name", "Alice"}},bson.D{{"name", "Bob"}})
-func (client *mgClient) InsertMany(db string, table string, docs ...interface{}) error {
-	_, err := client.Database(db).Collection(table).InsertMany(getContext(), docs)
-	return err
-}
-
-// Upsert doc是bson格式
-func (client *mgClient) Upsert(db string, table string, filter bson.D, doc interface{}) error {
-	collection := client.Database(db).Collection(table)
-	//设置Upset模式
-	opts := options.FindOneAndUpdate().SetUpsert(true)
-	return collection.FindOneAndUpdate(getContext(), filter, doc, opts).Err()
-}
-
-func (client *mgClient) ReplaceOne(db string, table string, filter bson.D, doc interface{}) error {
-	collection := client.Database(db).Collection(table)
-
-	//设置Replace设置项
-	opts := options.Replace().SetUpsert(true)
-	_, err := collection.ReplaceOne(getContext(), filter, doc, opts)
-	return err
-}
-
-// example
-// filter := bson.D{{"_id", id}}
-//	update := bson.D{{"email", "newemail@example.com"}}
-func (client *mgClient) UpdateOne(db string, table string, filter interface{}, update bson.D) error {
-	_, err := client.Database(db).Collection(table).UpdateOne(getContext(), filter, bson.M{"$set": update}, nil)
-	return err
-}
-
-//example
-//filter := bson.D{{"birthday", today}}
-//update := bson.D{{"$inc", bson.D{{"age", 1}}}}
-func (client *mgClient) UpdateMany(db string, table string, filter interface{}, update interface{}) error {
-	_, err := client.Database(db).Collection(table).UpdateMany(getContext(), filter, update, nil)
 	return err
 }
 
