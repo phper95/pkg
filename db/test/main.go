@@ -7,22 +7,16 @@ import (
 	"time"
 )
 
-var logger *zap.Logger
-
-func init() {
-	logger, _ = zap.NewDevelopment()
-}
-
 func initMysql() {
 	err := db.InitMysqlClient(db.DefaultClient, "root", "admin123", "localhost:3306", "shop")
 	if err != nil {
-		logger.Error("InitMysqlClient client error" + db.DefaultClient)
+		db.MysqltdLogger.Print("InitMysqlClient client error" + db.DefaultClient)
 		return
 	}
-	logger.Debug("connect mysql success ", zap.String("client", db.DefaultClient))
+	db.MysqltdLogger.Print("connect mysql success ", zap.String("client", db.DefaultClient))
 	err = db.InitMysqlClientWithOptions(db.TxClient, "root", "admin123", "localhost:3306", "shop", db.WithPrepareStmt(false))
 	if err != nil {
-		logger.Error("InitMysqlClient client error" + db.TxClient)
+		db.MysqltdLogger.Print("InitMysqlClient client error" + db.TxClient)
 		return
 	}
 
@@ -74,7 +68,7 @@ func main() {
 
 	//自定义表名的另一种方式
 	//if err := ormDB.Table("user_table2").AutoMigrate(&User{}); err != nil {
-	//	logger.Error("AutoMigrate user error", zap.Error(err))
+	//	db.MysqltdLogger.Print("AutoMigrate user error", zap.Error(err))
 	//}
 
 	name := ""
@@ -87,18 +81,18 @@ func main() {
 		Email:    "111@qq.com",
 	}
 	//if err := ormDB.Create(&user).Error; err != nil {
-	//	logger.Error("insert error", zap.Any("user", user))
+	//	db.MysqltdLogger.Print("insert error", zap.Any("user", user))
 	//}
 
 	// 指定字段创建
 	//if err := ormDB.Select("email").Create(&user).Error; err != nil {
-	//	logger.Error("insert error", zap.Any("user", user))
+	//	db.MysqltdLogger.Print("insert error", zap.Any("user", user))
 	//}
 
 	// 批量创建
 	//var users = []User{{Name: "user1", Email: "u1"}, {Name: "user2", Email: "u2"}, {Name: "user3", Email: "u3"}}
 	//if err := ormDB.Create(&users).Error; err != nil {
-	//	logger.Error("insert error", zap.Any("user", user))
+	//	db.MysqltdLogger.Print("insert error", zap.Any("user", user))
 	//}
 
 	//查询时会忽略空值，o值，false和null值
@@ -162,7 +156,7 @@ func main() {
 	//		return errors.New("rollback user2") // 回滚 user2
 	//	})
 	//	if err != nil {
-	//		logger.Error("Create user2 error", zap.Error(err))
+	//		db.MysqltdLogger.Print("Create user2 error", zap.Error(err))
 	//	}
 	//
 	//	err = tx.Transaction(func(tx2 *gorm.DB) error {
@@ -170,39 +164,39 @@ func main() {
 	//		return nil
 	//	})
 	//	if err != nil {
-	//		logger.Error("Create user3 error", zap.Error(err))
+	//		db.MysqltdLogger.Print("Create user3 error", zap.Error(err))
 	//	}
 	//
 	//	//返回值为nil时才会提交事务
 	//	return nil
 	//})
 	//if err != nil {
-	//	logger.Error("Transaction error", zap.Error(err))
+	//	db.MysqltdLogger.Print("Transaction error", zap.Error(err))
 	//}
 
-	/*
-		user4 := User{
-			Name:     "user4",
-			Age:      0,
-			Birthday: nil,
-			Email:    "user4@qq.com",
-		}
+	/**
+	user4 := User{
+		Name:     "user4",
+		Age:      0,
+		Birthday: nil,
+		Email:    "user4@qq.com",
+	}
 
-		user5 := User{
-			Name:     "user5",
-			Age:      0,
-			Birthday: nil,
-			Email:    "user5@qq.com",
-		}
-		//检查点和回滚点
-		tx := ormDBTx.Begin()
-		tx.Create(&user4)
+	user5 := User{
+		Name:     "user5",
+		Age:      0,
+		Birthday: nil,
+		Email:    "user5@qq.com",
+	}
+	//检查点和回滚点
+	tx := ormDBTx.Begin()
+	tx.Create(&user4)
 
-		tx.SavePoint("step1")
-		tx.Create(&user5)
-		tx.RollbackTo("step1") // 回滚 user2
-
-		tx.Commit() // 最终仅提交 user4
+	tx.SavePoint("step1")
+	tx.Create(&user5)
+	tx.RollbackTo("step1") // 回滚 user2
+	tx.Commit() // 最终仅提交 user4
 
 	*/
+
 }
