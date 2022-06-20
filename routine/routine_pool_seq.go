@@ -41,24 +41,24 @@ func NewSeqExecutor(
 	return seq
 }
 
-func (self *SeqExecutor) execute(f Function) {
+func (s *SeqExecutor) execute(f Function) {
 	// TODO: timeout
 	defer errors.Recover()
 	f()
 }
 
-func (self *SeqExecutor) worker_loop(n int) {
-	defer self.wg.Done()
-	self.wg.Add(1)
+func (s *SeqExecutor) run(n int) {
+	defer s.wg.Done()
+	s.wg.Add(1)
 
-	var queue = self.chQueues[n]
+	var queue = s.chQueues[n]
 	var stop int = 0
 	var stopTime time.Time
 	for {
-		stop = self.stopSignal[n]
+		stop = s.stopSignal[n]
 		select {
 		case f := <-queue:
-			self.execute(f)
+			s.execute(f)
 		}
 		if stop != 0 {
 			if len(queue) == 0 {
@@ -70,7 +70,7 @@ func (self *SeqExecutor) worker_loop(n int) {
 				stopTime = time.Now()
 			}
 
-			if time.Since(stopTime) >= self.timeout {
+			if time.Since(stopTime) >= s.timeout {
 				log.Fatal("Exit-timeout[%v] Fail,[%v]jobs not-finish.",
 					time.Since(stopTime), len(queue))
 				return
@@ -83,17 +83,17 @@ func (self *SeqExecutor) worker_loop(n int) {
 	} //end loop-for
 }
 
-func (self *SeqExecutor) Start() {
-	for i := 0; i < self.workers; i++ {
-		go self.worker_loop(i)
+func (s *SeqExecutor) Start() {
+	for i := 0; i < s.workers; i++ {
+		go s.run(i)
 	}
 }
 
 // 队列满了时，会阻塞
-func (self *SeqExecutor) Put(f Function, hash int64) {
-	n := int(hash) % self.workers
-	q := self.chQueues[n]
-	if float64(len(q))/self.queueLen >= 0.85 {
+func (s *SeqExecutor) Put(f Function, hash int64) {
+	n := int(hash) % s.workers
+	q := s.chQueues[n]
+	if float64(len(q))/s.queueLen >= 0.85 {
 		routineLogger.Print("Job Queue using more then 85%%,cap[%v] len[%v]",
 			cap(q), len(q))
 	}
@@ -109,12 +109,12 @@ func (self *SeqExecutor) Put(f Function, hash int64) {
 }
 
 // 最坏情况会阻碍timeout的时间，留给待队列中的任务去执行。
-func (self *SeqExecutor) Stop() {
-	for i := 0; i < self.workers; i++ {
-		self.stopSignal[i] = 1
+func (s *SeqExecutor) Stop() {
+	for i := 0; i < s.workers; i++ {
+		s.stopSignal[i] = 1
 	}
 
 	routineLogger.Print("SeqExecutor.stop() -> WaitGroup ...")
-	self.wg.Wait()
+	s.wg.Wait()
 	routineLogger.Print("SeqExecutor stop finish.")
 }
