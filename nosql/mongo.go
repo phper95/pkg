@@ -306,7 +306,7 @@ func (client *mgClient) CreateIndex(db, table, key string, uniqueKey bool) error
 	return err
 }
 
-// 穿件多个索引
+// 创建多个索引
 func (client *mgClient) CreateMultiIndex(db, table string, keys []string, uniqueKey bool) error {
 	collection := client.Database(db).Collection(table)
 	doc := bsonx.Doc{}
@@ -322,8 +322,7 @@ func (client *mgClient) CreateMultiIndex(db, table string, keys []string, unique
 	return err
 }
 
-// DeleteIndex .
-func (client *mgClient) DeleteIndex(db, table string) error {
+func (client *mgClient) Drop(db, table string) error {
 	err := client.Database(db).Collection(table).Drop(getContext())
 	return err
 }

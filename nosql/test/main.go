@@ -60,7 +60,7 @@ func main() {
 	//if err != nil {
 	//	nosql.MongoStdLogger.Print("user3 error", err)
 	//}
-
+	//
 	//user4 := userWithID{
 	//	ID:   4,
 	//	Name: "test4",
@@ -79,7 +79,7 @@ func main() {
 	//if err != nil {
 	//	nosql.MongoStdLogger.Print(err)
 	//}
-	//
+
 	//user6 := map[string]interface{}{
 	//	"id":   "2",
 	//	"name": "test2",
@@ -112,7 +112,7 @@ func main() {
 
 	//7.upsert
 	//update := map[string]interface{}{"name": "test333"}
-	//err = mongoClient.Upsert(DBName, TableName, bson.D{{"_id", 4}}, update)
+	//err = mongoClient.Upsert(DBName, TableName, bson.D{{"_id", 5}}, update)
 	//if err != nil {
 	//	nosql.MongoStdLogger.Print("user7 insert error : ", err)
 	//}
@@ -135,7 +135,7 @@ func main() {
 	//if err != nil {
 	//	nosql.MongoStdLogger.Print("FindUseCursor error : ", err)
 	//}
-	// 10. count
+	//10. count
 	//count, err := mongoClient.EstimatedDocumentCount(DBName, TableName)
 	//nosql.MongoStdLogger.Print("EstimatedDocumentCount : ", " count : ", count, " error : ", err)
 	//11.删除

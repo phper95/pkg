@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"gitee.com/phper95/pkg/db"
 	"go.uber.org/zap"
 	"time"
@@ -54,32 +53,32 @@ type User struct {
 func main() {
 	initMysql()
 
-	ormDB := db.GetMysqlClient(db.DefaultClient).DB
-	//ormDBTx := db.GetMysqlClient(db.TxClient).DB
+	//ormDB := db.GetMysqlClient(db.DefaultClient).DB
+	ormDBTx := db.GetMysqlClient(db.TxClient).DB
 
 	//查看连接配置
-	sqlDB, _ := ormDB.DB()
-	db.MysqltdLogger.Printf("Stats : %+v", sqlDB.Stats())
+	//sqlDB, _ := ormDB.DB()
+	//db.MysqltdLogger.Printf("Stats : %+v", sqlDB.Stats())
 
 	//建表
-	if err := ormDB.AutoMigrate(&User{}); err != nil {
-		db.MysqltdLogger.Print("AutoMigrate user error", err)
-	}
+	//if err := ormDB.AutoMigrate(&User{}); err != nil {
+	//	db.MysqltdLogger.Print("AutoMigrate user error", err)
+	//}
 
 	//自定义表名的另一种方式
 	//if err := ormDB.Table("user_table2").AutoMigrate(&User{}); err != nil {
 	//	db.MysqltdLogger.Print("AutoMigrate user error", zap.Error(err))
 	//}
 
-	name := ""
+	//name := ""
 	//写入数据
-	user := User{
-		Name: name,
-		//Name:     &name,
-		Age:      0,
-		Birthday: nil,
-		Email:    "111@qq.com",
-	}
+	//user := User{
+	//	Name: name,
+	//	//Name:     &name,
+	//	Age:      0,
+	//	Birthday: nil,
+	//	Email:    "111@qq.com",
+	//}
 	//if err := ormDB.Create(&user).Error; err != nil {
 	//	db.MysqltdLogger.Print("insert error", zap.Any("user", user))
 	//}
@@ -96,34 +95,34 @@ func main() {
 	//}
 
 	//查询时会忽略空值，o值，false和null值
-	users := make([]*User, 0)
-	ormDB.Where(&user).Find(&users)
-	db.MysqltdLogger.Printf("%+v", users)
+	//users := make([]User, 0)
+	//ormDB.Where(&user).Find(&users)
+	//db.MysqltdLogger.Printf("%+v", users)
 
 	//只获取指定字段
 	//方式1
-	ormDB.Select("name", "email").Find(&user)
-	db.MysqltdLogger.Print("指定字段%+v", users)
+	//ormDB.Select("name", "email").Find(&users)
+	//db.MysqltdLogger.Print("指定字段", users)
 	//方式2 通过定义结构体来限制需要获取的字段
-	type APIUser struct {
-		ID   uint
-		Name string
-	}
-	ormDB.Model(&User{}).Limit(5).Find(&APIUser{}).Scan(&users)
-
+	//type APIUser struct {
+	//	ID   uint
+	//	Name string
+	//}
+	//ormDB.Model(&User{}).Limit(5).Find(&APIUser{}).Scan(&users)
+	//
 	//执行原生sql
 	//查询
-	var userRes User
-	err := ormDB.Raw("select * from user where id = ?", 1).Scan(&userRes).Error
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(userRes)
-
-	err = ormDB.Exec("DROP TABLE user").Error
-	if err != nil {
-		db.MysqltdLogger.Print("DROP TABLE error", err)
-	}
+	//var userRes User
+	//err := ormDB.Raw("select * from user where id = ?", 1).Scan(&userRes).Error
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//fmt.Println(userRes)
+	//
+	//err = ormDB.Exec("DROP TABLE user").Error
+	//if err != nil {
+	//	db.MysqltdLogger.Print("DROP TABLE error", err)
+	//}
 
 	//事务的使用
 	//user1 := User{
@@ -174,7 +173,6 @@ func main() {
 	//	db.MysqltdLogger.Print("Transaction error", zap.Error(err))
 	//}
 
-	/**
 	user4 := User{
 		Name:     "user4",
 		Age:      0,
@@ -195,8 +193,6 @@ func main() {
 	tx.SavePoint("step1")
 	tx.Create(&user5)
 	tx.RollbackTo("step1") // 回滚 user2
-	tx.Commit() // 最终仅提交 user4
-
-	*/
+	tx.Commit()            // 最终仅提交 user4
 
 }
