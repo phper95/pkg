@@ -42,7 +42,6 @@ func TestRoutinePool(t *testing.T) {
 		})
 	}
 
-	routineLogger.Printf("End Testing: QueueLen=[%v]", QueueLen())
 	time.Sleep(5 * time.Second)
 }
 
