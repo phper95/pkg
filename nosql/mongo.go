@@ -89,6 +89,31 @@ func (client *mgClient) InsertMany(db string, table string, docs ...interface{})
 	return err
 }
 
+//上面的InsertMany在遇到异常的时候（比如插入mongo集群中已存在的数据），全部文档都会插入失败
+//这个方法则忽略异常的文档，将没出问题的这部分文档写入到mongo
+//检测插入过程的错误可以使用下面的方式
+//err := GetMongoClient(DefaultMongoClient).InsertManyTryBest("db", "table", doc)
+//we, ok := err.(mongo.BulkWriteException)
+//if ok {
+//TO DO ...
+//}
+//出现重复文档的code = 11000
+//if we.HasErrorCode(11000) {
+// TO DO ...
+//}
+func (client *mgClient) InsertManyTryBest(db string, table string, docs ...interface{}) error {
+	var err error
+	collection := client.Database(db).Collection(table)
+	ordered := false
+	opts := []*options.InsertManyOptions{{
+		Ordered: &ordered,
+	}}
+	if _, err = collection.InsertMany(getContext(), docs, opts...); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Upsert doc是bson格式
 func (client *mgClient) Upsert(db string, table string, filter bson.D, doc interface{}) error {
 	collection := client.Database(db).Collection(table)
