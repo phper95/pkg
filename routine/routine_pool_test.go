@@ -1,63 +1,54 @@
 package routine
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 	"time"
 )
 
-func Test_grpool_Panic(t *testing.T) {
+func TestRoutinePoolPanic(t *testing.T) {
 	numWorkers, jobQueueLen := 1, 2
 	Init(numWorkers, jobQueueLen, time.Second)
 
-	panic_nil_pointer_func := func() {
+	panicFunc := func() {
 		var err error
 		err.Error()
 	}
-	PutTask(panic_nil_pointer_func)
+	PutTask(panicFunc)
 	success := false
-	t_success := func() {
+	routineFunc := func() {
 		success = true
-		routineLogger.Print("============> set success=Ture")
+		routineLogger.Printf("panicFunc exec")
 	}
-	PutTask(t_success)
+	PutTask(routineFunc)
 	time.Sleep(time.Millisecond * 50)
 	if !success {
-		t.Fatalf("must support function-job painc.")
+		t.Fatalf("routineFunc exec failed")
 	}
 	Stop()
 }
 
-func Test_grpool_release(t *testing.T) {
+func TestRoutinePool(t *testing.T) {
 
-	numWorkers, jobQueueLen := 1, 64
-	jobTimeout := time.Second / 100
-	Init(numWorkers, jobQueueLen, jobTimeout)
-
-	start := time.Now()
-
-	double_timeout_job := func() {
-		time.Sleep(jobTimeout * 2) // 2倍的最大任务超时, 必然不打印以下"Job Done"
-		// time.Sleep(jobTimeout / 2) // 1/2的最大任务超时，一定要打印出"Job Done"
-		// t.Fatalf("job run use time was max-timeout*2, do not Print this msg")
+	numWorkers, jobQueueLen := 10, 100
+	jobTimeout := time.Duration(0)
+	routinePool := InitPoolWithName("test", numWorkers, jobQueueLen, jobTimeout)
+	routinePool.Start()
+	for i := 0; i < 10; i++ {
+		cur := i
+		routinePool.Put(func() {
+			fmt.Println(cur)
+		})
 	}
 
-	PutTask(double_timeout_job)
-
-	Stop()
-
-	if time.Since(start) >= 2*jobTimeout {
-		t.Fatalf("job-max-execout-timeout was set[%v]", jobTimeout)
-	}
-
-	routineLogger.Print("End Testing: QueueLen=[%v]", QueueLen())
-
+	time.Sleep(5 * time.Second)
 }
 
-func Test_manay_goruntine(t *testing.T) {
+func TestRoutineTimeout(t *testing.T) {
 	numWorkers, jobQueueLen := 2, 4
 	jobTimeout := time.Second / 100
-	grp := NewPoolWithName("Long", numWorkers, jobQueueLen, jobTimeout)
+	grp := InitPoolWithName("timeout-job", numWorkers, jobQueueLen, jobTimeout)
 	grp.Start()
 
 	l := sync.Mutex{}
@@ -67,7 +58,7 @@ func Test_manay_goruntine(t *testing.T) {
 		jobCnt++
 		l.Unlock()
 		time.Sleep(jobTimeout * 4) // 4倍的最大任务超时
-		routineLogger.Print("Long-Time Job Done -------cnt=%v--", jobCnt)
+		routineLogger.Printf("Long-Time Job Done -------cnt=%v--", jobCnt)
 	}
 	expect := 0
 	for i := 0; i < numWorkers*jobQueueLen; i++ {
@@ -79,7 +70,4 @@ func Test_manay_goruntine(t *testing.T) {
 	if expect != jobCnt {
 		t.Fatalf("expect[%v] all job was done, but got[%v],", expect, jobCnt)
 	}
-	// time.Sleep(jobTimeout * 5)
-
-	// log.Close()
 }
