@@ -61,7 +61,7 @@ func (r *Redis) GetBit(key string, offset int64) (value int64, err error) {
 		r.trace.TraceTime = timeutil.CSTLayoutString()
 		r.trace.CMD = "getbit"
 		r.trace.Key = realKey
-		r.trace.Value = fmt.Sprintf("origin : %d ; real: %d ", GetOffset(offset))
+		r.trace.Value = fmt.Sprintf("origin : %d ; real: %d ", offset, GetOffset(offset))
 		r.trace.CostMillisecond = costMillisecond
 		r.trace.Logger.Warn("redis-trace", zap.Any("", r.trace))
 	}()
@@ -102,7 +102,7 @@ func (r *Redis) GetBigBit(key string, offset int64) (value int64, err error) {
 		r.trace.TraceTime = timeutil.CSTLayoutString()
 		r.trace.CMD = "getbit"
 		r.trace.Key = realKey
-		r.trace.Value = fmt.Sprintf("origin : %d ; real: %d ", GetBigOffset(offset))
+		r.trace.Value = fmt.Sprintf("origin : %d ; real: %d ", offset, GetBigOffset(offset))
 		r.trace.CostMillisecond = costMillisecond
 		r.trace.Logger.Warn("redis-trace", zap.Any("", r.trace))
 	}()
@@ -371,7 +371,7 @@ func (r *Redis) BitOPNOBucket(op, destKey string, keys ...string) (value int64, 
 		}
 		value, err = cmd.Result()
 		if err != nil {
-			return value, errors.Wrapf(err, "redis bitop AND destKey: %s  keys : %v ,err", destKey, keys, err)
+			return value, errors.Wrapf(err, "redis bitop AND destKey: %s  keys : %v ,err", destKey, keys)
 		}
 		return
 
@@ -391,7 +391,7 @@ func (r *Redis) BitOPNOBucket(op, destKey string, keys ...string) (value int64, 
 	}
 	value, err = cmd.Result()
 	if err != nil {
-		return value, errors.Wrapf(err, "redis bitop %s destKey: %s  keys : %v ,err", op, destKey, keys, err)
+		return value, errors.Wrapf(err, "redis bitop %s destKey: %s  keys : %v ,err", op, destKey, keys)
 	}
 	return
 }

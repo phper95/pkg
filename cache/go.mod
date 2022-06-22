@@ -8,5 +8,6 @@ require (
 	gitee.com/phper95/pkg/timeutil v0.0.0-20220305145820-1201417a8338
 	gitee.com/phper95/pkg/trace v0.0.0-20220618105137-6418dd8c0fd5
 	github.com/go-redis/redis/v7 v7.4.1
+	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.21.0
 )
