@@ -6,6 +6,7 @@ import (
 	"gitee.com/phper95/pkg/timeutil"
 	"github.com/go-redis/redis/v7"
 	"go.uber.org/zap"
+	"strings"
 	"time"
 )
 
@@ -325,6 +326,72 @@ func (r *Redis) SetBitNOBucket(key string, offset int64, val int) (value int64, 
 	value, err = r.clusterClient.SetBit(key, offset, val).Result()
 	if err != nil {
 		return value, errors.Wrapf(err, "redis setbit key: %s err", key)
+	}
+	return
+}
+
+func (r *Redis) BitOPNOBucket(op, destKey string, keys ...string) (value int64, err error) {
+	if len(keys) == 0 {
+		err = errors.New("empty keys")
+		return
+	}
+	ts := time.Now()
+
+	defer func() {
+		if r.trace == nil || r.trace.Logger == nil {
+			return
+		}
+		costMillisecond := time.Since(ts).Milliseconds()
+
+		if !r.trace.AlwaysTrace && costMillisecond < r.trace.SlowLoggerMillisecond {
+			return
+		}
+		r.trace.TraceTime = timeutil.CSTLayoutString()
+		r.trace.CMD = "bitop " + op
+		r.trace.Key = destKey
+		r.trace.Value = strings.Join(keys, ",")
+		r.trace.CostMillisecond = costMillisecond
+		r.trace.Logger.Warn("redis-trace", zap.Any("", r.trace))
+	}()
+
+	var cmd *redis.IntCmd
+	op = strings.ToUpper(op)
+	if r.client != nil {
+		switch op {
+		case "AND":
+			cmd = r.client.BitOpAnd(destKey, keys...)
+		case "OR":
+			cmd = r.client.BitOpOr(destKey, keys...)
+		case "XOR":
+			cmd = r.client.BitOpXor(destKey, keys...)
+		case "NOT":
+			cmd = r.client.BitOpNot(destKey, keys[0])
+		default:
+			return 0, errors.New("illegal op " + op + "; key: " + destKey)
+		}
+		value, err = cmd.Result()
+		if err != nil {
+			return value, errors.Wrapf(err, "redis bitop AND destKey: %s  keys : %v ,err", destKey, keys, err)
+		}
+		return
+
+	}
+
+	switch op {
+	case "AND":
+		cmd = r.client.BitOpAnd(destKey, keys...)
+	case "OR":
+		cmd = r.client.BitOpOr(destKey, keys...)
+	case "XOR":
+		cmd = r.client.BitOpXor(destKey, keys...)
+	case "NOT":
+		cmd = r.client.BitOpNot(destKey, keys[0])
+	default:
+		return 0, errors.New("illegal op " + op + "; key: " + destKey)
+	}
+	value, err = cmd.Result()
+	if err != nil {
+		return value, errors.Wrapf(err, "redis bitop %s destKey: %s  keys : %v ,err", op, destKey, keys, err)
 	}
 	return
 }
