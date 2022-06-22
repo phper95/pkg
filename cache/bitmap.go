@@ -206,3 +206,80 @@ func (r *Redis) SetBigBit(key string, offset int64, val int) (value int64, err e
 	}
 	return
 }
+
+func (r *Redis) GetBitNOBucket(key string, offset int64) (value int64, err error) {
+	if len(key) == 0 {
+		err = errors.New("empty key")
+		return
+	}
+	ts := time.Now()
+	defer func() {
+		if r.trace == nil || r.trace.Logger == nil {
+			return
+		}
+		costMillisecond := time.Since(ts).Milliseconds()
+
+		if !r.trace.AlwaysTrace && costMillisecond < r.trace.SlowLoggerMillisecond {
+			return
+		}
+		r.trace.TraceTime = timeutil.CSTLayoutString()
+		r.trace.CMD = "getbit"
+		r.trace.Key = key
+		r.trace.Value = offset
+		r.trace.CostMillisecond = costMillisecond
+		r.trace.Logger.Warn("redis-trace", zap.Any("", r.trace))
+	}()
+
+	if r.client != nil {
+		value, err = r.client.GetBit(key, offset).Result()
+		if err != nil {
+			return value, errors.Wrapf(err, "redis getbit key: %s err", key)
+		}
+		return
+	}
+
+	value, err = r.clusterClient.GetBit(key, offset).Result()
+	if err != nil {
+		return value, errors.Wrapf(err, "redis getbit key: %s err", key)
+	}
+	return
+}
+
+func (r *Redis) SetBitNOBucket(key string, offset int64, val int) (value int64, err error) {
+	if len(key) == 0 {
+		err = errors.New("empty key")
+		return
+	}
+	ts := time.Now()
+
+	defer func() {
+		if r.trace == nil || r.trace.Logger == nil {
+			return
+		}
+		costMillisecond := time.Since(ts).Milliseconds()
+
+		if !r.trace.AlwaysTrace && costMillisecond < r.trace.SlowLoggerMillisecond {
+			return
+		}
+		r.trace.TraceTime = timeutil.CSTLayoutString()
+		r.trace.CMD = "setbit"
+		r.trace.Key = key
+		r.trace.Value = val
+		r.trace.CostMillisecond = costMillisecond
+		r.trace.Logger.Warn("redis-trace", zap.Any("", r.trace))
+	}()
+
+	if r.client != nil {
+		value, err = r.client.SetBit(key, offset, val).Result()
+		if err != nil {
+			return value, errors.Wrapf(err, "redis setbit key: %s err", key)
+		}
+		return
+	}
+
+	value, err = r.clusterClient.SetBit(key, offset, val).Result()
+	if err != nil {
+		return value, errors.Wrapf(err, "redis setbit key: %s err", key)
+	}
+	return
+}

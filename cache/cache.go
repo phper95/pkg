@@ -15,6 +15,8 @@ type Cache interface {
 	GetBit(key string, offset int64) (value int64, err error)
 	SetBigBit(key string, offset int64, value int) error
 	GetBigBit(key string, offset int64) (value int64, err error)
+	SetBitNOBucket(key string, offset int64, value int) error
+	GetBitNOBucket(key string, offset int64) (value int64, err error)
 	Close() error
 	Version() string
 }
