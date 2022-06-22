@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gitee.com/phper95/pkg/errors"
 	"gitee.com/phper95/pkg/timeutil"
+	"github.com/go-redis/redis/v7"
 	"go.uber.org/zap"
 	"time"
 )
@@ -241,6 +242,50 @@ func (r *Redis) GetBitNOBucket(key string, offset int64) (value int64, err error
 	value, err = r.clusterClient.GetBit(key, offset).Result()
 	if err != nil {
 		return value, errors.Wrapf(err, "redis getbit key: %s err", key)
+	}
+	return
+}
+
+func (r *Redis) GetBitCountNOBucket(key string, start, end int64) (value int64, err error) {
+	if len(key) == 0 {
+		err = errors.New("empty key")
+		return
+	}
+	ts := time.Now()
+	defer func() {
+		if r.trace == nil || r.trace.Logger == nil {
+			return
+		}
+		costMillisecond := time.Since(ts).Milliseconds()
+
+		if !r.trace.AlwaysTrace && costMillisecond < r.trace.SlowLoggerMillisecond {
+			return
+		}
+		r.trace.TraceTime = timeutil.CSTLayoutString()
+		r.trace.CMD = "bitcount"
+		r.trace.Key = key
+		r.trace.Value = fmt.Sprintf("start : %d ; end : %d", start, end)
+		r.trace.CostMillisecond = costMillisecond
+		r.trace.Logger.Warn("redis-trace", zap.Any("", r.trace))
+	}()
+
+	if r.client != nil {
+		value, err = r.client.BitCount(key, &redis.BitCount{
+			Start: start,
+			End:   end,
+		}).Result()
+		if err != nil {
+			return value, errors.Wrapf(err, "redis bitcount key: %s err", key)
+		}
+		return
+	}
+
+	value, err = r.clusterClient.BitCount(key, &redis.BitCount{
+		Start: start,
+		End:   end,
+	}).Result()
+	if err != nil {
+		return value, errors.Wrapf(err, "redis bitcount key: %s err", key)
 	}
 	return
 }
