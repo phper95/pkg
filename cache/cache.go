@@ -11,6 +11,10 @@ type Cache interface {
 	Del(key string) (bool, error)
 	Exists(keys ...string) (bool, error)
 	Incr(key string) (int64, error)
+	SetBit(key string, offset int64, value int) error
+	GetBit(key string, offset int64) (value int64, err error)
+	SetBigBit(key string, offset int64, value int) error
+	GetBigBit(key string, offset int64) (value int64, err error)
 	Close() error
 	Version() string
 }
