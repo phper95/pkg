@@ -246,7 +246,7 @@ func (r *Redis) GetBitNOBucket(key string, offset int64) (value int64, err error
 	return
 }
 
-func (r *Redis) GetBitCountNOBucket(key string, start, end int64) (value int64, err error) {
+func (r *Redis) BitCountNOBucket(key string, start, end int64) (value int64, err error) {
 	if len(key) == 0 {
 		err = errors.New("empty key")
 		return
