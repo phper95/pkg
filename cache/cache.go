@@ -8,7 +8,8 @@ import (
 
 type Cache interface {
 	Set(key string, value interface{}, ttl time.Duration) error
-	Get(key string) (value string, err error)
+	Get(key string) interface{}
+	GetStr(key string) (value string, err error)
 	TTL(key string) (time.Duration, error)
 	Expire(key string, ttl time.Duration) (bool, error)
 	ExpireAt(key string, ttl time.Time) (bool, error)

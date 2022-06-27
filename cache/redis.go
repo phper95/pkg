@@ -173,7 +173,46 @@ func (r *Redis) Set(key string, value interface{}, ttl time.Duration) error {
 }
 
 // Get get some key from redis
-func (r *Redis) Get(key string) (value string, err error) {
+func (r *Redis) Get(key string) interface{} {
+	if len(key) == 0 {
+		CacheStdLogger.Println("empty key")
+		return nil
+	}
+	ts := time.Now()
+	defer func() {
+		if r.trace == nil || r.trace.Logger == nil {
+			return
+		}
+		costMillisecond := time.Since(ts).Milliseconds()
+
+		if !r.trace.AlwaysTrace && costMillisecond < r.trace.SlowLoggerMillisecond {
+			return
+		}
+		r.trace.TraceTime = timeutil.CSTLayoutString()
+		r.trace.CMD = "get"
+		r.trace.Key = key
+		r.trace.Value = ""
+		r.trace.CostMillisecond = costMillisecond
+		r.trace.Logger.Warn("redis-trace", zap.Any("", r.trace))
+	}()
+
+	if r.client != nil {
+		value, err := r.client.Get(key).Result()
+		if err != nil {
+			CacheStdLogger.Printf("redis get key: %s err %v", key, err)
+
+		}
+		return value
+	}
+
+	value, err := r.clusterClient.Get(key).Result()
+	if err != nil {
+		CacheStdLogger.Printf("redis get key: %s err %v", key, err)
+	}
+	return value
+}
+
+func (r *Redis) GetStr(key string) (value string, err error) {
 	if len(key) == 0 {
 		err = errors.New("empty key")
 		return
