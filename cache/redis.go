@@ -327,7 +327,46 @@ func (r *Redis) IsExist(key string) bool {
 	return value > 0
 }
 
-func (r *Redis) Delete(key string) (bool, error) {
+func (r *Redis) Delete(key string) bool {
+	if len(key) == 0 {
+		return false
+	}
+	ts := time.Now()
+	var value int64
+	var err error
+	defer func() {
+		if r.trace == nil || r.trace.Logger == nil {
+			return
+		}
+		costMillisecond := time.Since(ts).Milliseconds()
+
+		if !r.trace.AlwaysTrace && costMillisecond < r.trace.SlowLoggerMillisecond {
+			return
+		}
+		r.trace.TraceTime = timeutil.CSTLayoutString()
+		r.trace.CMD = "del"
+		r.trace.Key = key
+		r.trace.Value = strconv.FormatInt(value, 10)
+		r.trace.CostMillisecond = costMillisecond
+		r.trace.Logger.Warn("redis-trace", zap.Any("", r.trace))
+	}()
+
+	if r.client != nil {
+		value, err = r.client.Del(key).Result()
+		if err != nil {
+			CacheStdLogger.Printf("cmd : Exists ; key : %s ; err : %v", key, err)
+		}
+		return value > 0
+	}
+
+	//集群版
+	value, err = r.clusterClient.Del(key).Result()
+	if err != nil {
+		CacheStdLogger.Printf("cmd : Exists ; key : %s ; err : %v", key, err)
+	}
+	return value > 0
+}
+func (r *Redis) Del(key string) (bool, error) {
 	if len(key) == 0 {
 		return false, errors.New("empty key")
 	}
@@ -360,7 +399,6 @@ func (r *Redis) Delete(key string) (bool, error) {
 	value, err = r.clusterClient.Del(key).Result()
 	return value > 0, err
 }
-
 func (r *Redis) Incr(key string) (value int64, err error) {
 	if len(key) == 0 {
 		return 0, errors.New("empty key")
