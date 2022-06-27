@@ -17,7 +17,7 @@ type DB struct {
 	ClientName string
 	Username   string
 	password   string
-	Addr       string
+	Host       string
 	DBName     string
 }
 
@@ -44,10 +44,10 @@ const (
 	DefaultConnMaxLifeSecond  = 30 * time.Minute
 	DefaultLogName            = "gorm"
 	DefaultSlowLogMillisecond = 200
-	DefaultClient             = "default"
-	ReadClient                = "read"
-	WriteClient               = "write"
-	TxClient                  = "tx"
+	DefaultClient             = "default-mysql-client"
+	ReadClient                = "read-mysql"
+	WriteClient               = "write-mysql"
+	TxClient                  = "tx-mysql"
 )
 
 var (
@@ -107,7 +107,7 @@ func WithEnableSqlLog(enableSqlLog bool) Option {
 	}
 }
 
-func InitMysqlClient(clientName, username, password, addr, dbName string) error {
+func InitMysqlClient(clientName, username, password, host, dbName string) error {
 	if len(clientName) == 0 {
 		return errors.New("client name is empty")
 	}
@@ -120,21 +120,21 @@ func InitMysqlClient(clientName, username, password, addr, dbName string) error 
 		ConnMaxLifeSecond: DefaultConnMaxLifeSecond,
 		PrepareStmt:       true,
 	}
-	db, err := dbConnect(username, password, addr, dbName, opt)
+	db, err := dbConnect(username, password, host, dbName, opt)
 	if err != nil {
-		return errors.Wrapf(err, "addr : "+addr)
+		return errors.Wrapf(err, "host : "+host)
 	}
 	mysqlClients[clientName] = &DB{
 		DB:         db,
 		ClientName: clientName,
 		Username:   username,
 		password:   password,
-		Addr:       addr,
+		Host:       host,
 		DBName:     dbName,
 	}
 	return nil
 }
-func InitMysqlClientWithOptions(clientName, username, password, addr, dbName string, options ...Option) error {
+func InitMysqlClientWithOptions(clientName, username, password, host, dbName string, options ...Option) error {
 	if len(clientName) == 0 {
 		return errors.New("client name is empty")
 	}
@@ -148,16 +148,16 @@ func InitMysqlClientWithOptions(clientName, username, password, addr, dbName str
 		}
 	}
 
-	db, err := dbConnect(username, password, addr, dbName, opt)
+	db, err := dbConnect(username, password, host, dbName, opt)
 	if err != nil {
-		return errors.Wrapf(err, "addr : "+addr)
+		return errors.Wrapf(err, "host : "+host)
 	}
 	mysqlClients[clientName] = &DB{
 		DB:         db,
 		ClientName: clientName,
 		Username:   username,
 		password:   password,
-		Addr:       addr,
+		Host:       host,
 		DBName:     dbName,
 	}
 	return nil
@@ -177,11 +177,11 @@ func CloseMysqlClient(clientName string) error {
 	return sqlDB.Close()
 }
 
-func dbConnect(user, pass, addr, dbName string, option *option) (*gorm.DB, error) {
+func dbConnect(user, pass, host, dbName string, option *option) (*gorm.DB, error) {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=%t&loc=%s",
 		user,
 		pass,
-		addr,
+		host,
 		dbName,
 		true,
 		"Local")

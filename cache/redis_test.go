@@ -78,7 +78,7 @@ func TestBitOp(t *testing.T) {
 	if !assert.EqualValues(t, count, 2) {
 		t.Error("count except 2 but ", count)
 	}
-	b, err := redisClient.Del(key)
+	b, err := redisClient.Delete(key)
 	t.Log(b, err)
 	t.Log(res)
 }

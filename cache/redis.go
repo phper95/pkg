@@ -270,7 +270,25 @@ func (r *Redis) Exists(keys ...string) (bool, error) {
 	return value > 0, err
 }
 
-func (r *Redis) Del(key string) (bool, error) {
+func (r *Redis) IsExist(key string) bool {
+	if len(key) == 0 {
+		return false
+	}
+	if r.client != nil {
+		value, err := r.client.Exists(key).Result()
+		if err != nil {
+			CacheStdLogger.Printf("cmd : Exists ; key : %s ; err : %v", key, err)
+		}
+		return value > 0
+	}
+	value, err := r.clusterClient.Exists(key).Result()
+	if err != nil {
+		CacheStdLogger.Printf("cmd : Exists ; key : %s ; err : %v", key, err)
+	}
+	return value > 0
+}
+
+func (r *Redis) Delete(key string) (bool, error) {
 	if len(key) == 0 {
 		return false, errors.New("empty key")
 	}
