@@ -13,8 +13,7 @@ type Cache interface {
 	TTL(key string) (time.Duration, error)
 	Expire(key string, ttl time.Duration) (bool, error)
 	ExpireAt(key string, ttl time.Time) (bool, error)
-	Delete(key string) bool
-	Del(key string) (bool, error)
+	Delete(key string) error
 	Exists(keys ...string) (bool, error)
 	IsExist(key string) bool
 	Incr(key string) (int64, error)
