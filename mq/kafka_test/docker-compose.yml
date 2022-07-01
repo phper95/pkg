@@ -1,46 +1,15 @@
-version: '3.8'
+version: '3'
 services:
   zookeeper:
     image: wurstmeister/zookeeper
     ports:
       - "2181:2181"
-    restart: always
-  kafka1:
+  kafka:
     image: wurstmeister/kafka
     depends_on: [ zookeeper ]
-    container_name: kafka1
-    ports:
-      - "9091:9091"
-    environment:
-      HOSTNAME: kafka1
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka1:9091
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9091
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-    extra_hosts:
-      kafka1: 192.168.1.6
-  kafka2:
-    image: wurstmeister/kafka
-    depends_on: [ zookeeper ]
-    container_name: kafka2
     ports:
       - "9092:9092"
     environment:
-      HOSTNAME: kafka2
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka2:9092
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+      KAFKA_CREATE_TOPICS: "shop-order:1:1"
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-    extra_hosts:
-      kafka2: 192.168.1.6
-  kafka3:
-    image: wurstmeister/kafka
-    depends_on: [ zookeeper ]
-    container_name: kafka3
-    ports:
-      - "9093:9093"
-    environment:
-      HOSTNAME: kafka3
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka3:9093
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9093
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-    extra_hosts:
-      kafka3: 192.168.1.6

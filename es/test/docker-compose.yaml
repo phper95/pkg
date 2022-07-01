@@ -4,7 +4,7 @@ services:
   setup:
     image: elasticsearch:${STACK_VERSION}
     volumes:
-      - certs:/usr/share/elasticsearch/config/certs
+      - ./certs:/usr/share/elasticsearch/config/certs
     user: "0"
     command: >
       bash -c '
@@ -68,10 +68,10 @@ services:
         condition: service_healthy
     image: elasticsearch:${STACK_VERSION}
     volumes:
-      - certs:/usr/share/elasticsearch/config/certs
-      - esdata01:/usr/share/elasticsearch/data
-      - config01:/usr/share/elasticsearch/config
-      - plugins01:/usr/share/elasticsearch/plugins
+      - ./certs:/usr/share/elasticsearch/config/certs
+      - ./esdata01:/usr/share/elasticsearch/data
+      - ./config01:/usr/share/elasticsearch/config
+      - ./plugins01:/usr/share/elasticsearch/plugins
     ports:
       - ${ES_PORT}:9200
     environment:
@@ -105,18 +105,19 @@ services:
             "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
         ]
       interval: 10s
-      timeout: 10s
+      timeout: 100s
       retries: 120
+    restart: always
 
   es02:
     depends_on:
       - es01
     image: elasticsearch:${STACK_VERSION}
     volumes:
-      - certs:/usr/share/elasticsearch/config/certs
-      - esdata02:/usr/share/elasticsearch/data
-      -  config02:/usr/share/elasticsearch/config
-      - plugins02:/usr/share/elasticsearch/plugins
+      - ./certs:/usr/share/elasticsearch/config/certs
+      - ./esdata02:/usr/share/elasticsearch/data
+      - ./config02:/usr/share/elasticsearch/config
+      - ./plugins02:/usr/share/elasticsearch/plugins
     environment:
       - node.name=es02
       - cluster.name=${CLUSTER_NAME}
@@ -147,18 +148,19 @@ services:
             "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
         ]
       interval: 10s
-      timeout: 10s
+      timeout: 100s
       retries: 120
+    restart: always
 
   es03:
     depends_on:
       - es02
     image: elasticsearch:${STACK_VERSION}
     volumes:
-      - certs:/usr/share/elasticsearch/config/certs
-      - esdata03:/usr/share/elasticsearch/data
-      - config03:/usr/share/elasticsearch/config
-      - plugins03:/usr/share/elasticsearch/plugins
+      - ./certs:/usr/share/elasticsearch/config/certs
+      - ./esdata03:/usr/share/elasticsearch/data
+      - ./config03:/usr/share/elasticsearch/config
+      - ./plugins03:/usr/share/elasticsearch/plugins
     environment:
       - node.name=es03
       - cluster.name=${CLUSTER_NAME}
@@ -189,21 +191,22 @@ services:
             "curl -s --cacert config/certs/ca/ca.crt https://localhost:9200 | grep -q 'missing authentication credentials'",
         ]
       interval: 10s
-      timeout: 10s
+      timeout: 100s
       retries: 120
+    restart: always
 
   kibana:
     depends_on:
       es01:
         condition: service_healthy
       es02:
-        condition: service_healthy
+        condition: service_started
       es03:
-        condition: service_healthy
+        condition: service_started
     image: kibana:${STACK_VERSION}
     volumes:
-      - kibanaconfig:/usr/share/kibana/config
-      - kibanadata:/usr/share/kibana/data
+      - ./kibanaconfig:/usr/share/kibana/config
+      - ./kibanadata:/usr/share/kibana/data
     ports:
       - ${KIBANA_PORT}:5601
     environment:
@@ -220,8 +223,9 @@ services:
             "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'",
         ]
       interval: 10s
-      timeout: 10s
+      timeout: 100s
       retries: 120
+    restart: always
 
 volumes:
   certs:
@@ -231,6 +235,20 @@ volumes:
   esdata02:
     driver: local
   esdata03:
+    driver: local
+  config01:
+    driver: local
+  config02:
+    driver: local
+  config03:
+    driver: local
+  plugins01:
+    driver: local
+  plugins02:
+    driver: local
+  plugins03:
+    driver: local
+  kibanaconfig:
     driver: local
   kibanadata:
     driver: local
