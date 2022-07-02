@@ -1,13 +1,17 @@
-version: '3'
+version: '3.0'
 services:
-  mongodb:
+  mongo:
     image: mongo:4.4.2
-    hostname: 0.0.0.0
+    restart: unless-stopped
+    container_name: mongodb
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=admin123
-    restart: on-failure
+      TZ: 'Asia/Shanghai'
+      #用户名密码
+      MONGO_INITDB_ROOT_USERNAME: 'admin'
+      MONGO_INITDB_ROOT_PASSWORD: 'admin123'
     ports:
       - 27017:27017
     volumes:
-      - ./mongodb:/data/db
+      - mongo-data:/data/db:rw
+volumes:
+ mongo-data:
