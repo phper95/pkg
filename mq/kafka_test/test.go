@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	hosts = []string{"192.168.1.6:9091"}
+	hosts = []string{"127.0.0.1:9092"}
 	topic = "test"
 )
 
