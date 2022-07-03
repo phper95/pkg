@@ -188,11 +188,18 @@ func (syncProducer *SyncProducer) keepConnect() {
 	defer func() {
 		KafkaStdLogger.Println("syncProducer keepConnect exited")
 	}()
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	for {
 		if syncProducer.Status == KafkaProducerClosed {
 			return
 		}
 		select {
+		case <-signals:
+			syncProducer.StatusLock.Lock()
+			syncProducer.Status = KafkaProducerClosed
+			syncProducer.StatusLock.Unlock()
+			return
 		case <-syncProducer.ReConnect:
 			if syncProducer.Status != KafkaProducerDisconnected {
 				break
