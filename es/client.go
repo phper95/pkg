@@ -2,8 +2,10 @@ package es
 
 import (
 	"context"
+	"crypto/tls"
 	"github.com/olivere/elastic/v7"
 	"log"
+	"net/http"
 	"os"
 	"sync"
 	"time"
@@ -22,6 +24,7 @@ type option struct {
 	GlobalSlowQueryMillisecond int64
 	Bulk                       *Bulk
 	DebugMode                  bool
+	Scheme                     string
 }
 type Option func(*option)
 type Client struct {
@@ -68,6 +71,11 @@ func WithSlowQueryLogMillisecond(slowQueryMillisecond int64) Option {
 		opt.GlobalSlowQueryMillisecond = slowQueryMillisecond
 	}
 }
+func WithScheme(scheme string) Option {
+	return func(opt *option) {
+		opt.Scheme = scheme
+	}
+}
 
 func WithBulk(bulk *Bulk) Option {
 	return func(opt *option) {
@@ -110,6 +118,14 @@ func getBaseOptions(username, password string, urls ...string) []elastic.ClientO
 	return options
 }
 
+func getDefaultClient() *http.Client {
+	tr := &http.Transport{
+		DisableKeepAlives: true,
+		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
+	}
+	return &http.Client{Transport: tr}
+}
+
 func InitClientWithOptions(clientName string, urls []string, username string, password string, options ...Option) error {
 	if clients == nil {
 		clients = make(map[string]*Client, 0)
@@ -134,6 +150,11 @@ func InitClientWithOptions(clientName string, urls []string, username string, pa
 	if opt.DebugMode {
 		esOptions = append(esOptions, elastic.SetInfoLog(EStdLogger))
 	}
+	if len(opt.Scheme) > 0 {
+		esOptions = append(esOptions, elastic.SetScheme(opt.Scheme))
+		esOptions = append(esOptions, elastic.SetHttpClient(getDefaultClient()))
+	}
+
 	client.QueryLogEnable = opt.QueryLogEnable
 	client.Bulk = opt.Bulk
 	if client.Bulk == nil {

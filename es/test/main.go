@@ -3,13 +3,16 @@ package main
 import (
 	"context"
 	"gitee.com/phper95/pkg/es"
+	"strconv"
 )
 
 const IndexName = "goods"
 
 func initES() {
-	err := es.InitClient(es.DefaultClient, []string{"http://127.0.0.1:9200"}, "elastic", "w4s*bHiPlK-wglVZuoX8")
+	err := es.InitClientWithOptions(es.DefaultClient, []string{"https://127.0.0.1:9200"},
+		"elastic", "elastic", es.WithScheme("https"))
 	if err != nil {
+		es.EStdLogger.Print("InitClient error", err, "client", es.DefaultClient)
 		panic(err)
 	}
 }
@@ -65,19 +68,19 @@ func main() {
 	if err != nil {
 		es.EStdLogger.Print(err)
 	}
-	//doc := Goods{
-	//	Id:             1,
-	//	Name:           "name1",
-	//	Price:          1000,
-	//	Year:           2022,
-	//	LastMonthSales: 22,
-	//	Favorites:      1939,
-	//}
-	//id := strconv.FormatInt(doc.Id, 10)
-	//err := esClient.Create(ctx, IndexName, id, "", doc)
-	//if err != nil {
-	//	es.EStdLogger.Print(err)
-	//}
+	doc := Goods{
+		Id:             1,
+		Name:           "name1",
+		Price:          1000,
+		Year:           2022,
+		LastMonthSales: 22,
+		Favorites:      1939,
+	}
+	id := strconv.FormatInt(doc.Id, 10)
+	err = esClient.Create(ctx, IndexName, id, "", doc)
+	if err != nil {
+		es.EStdLogger.Print(err)
+	}
 	//err := esClient.Update(ctx, IndexName, id, "", map[string]interface{}{"name": "name2"})
 	//if err != nil {
 	//	es.EStdLogger.Print(err)
