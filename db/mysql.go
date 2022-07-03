@@ -198,8 +198,8 @@ func dbConnect(user, pass, host, dbName string, option *option) (*gorm.DB, error
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		//为了确保数据一致性，GORM 会在事务里执行写入操作（创建、更新、删除）
 		//如果没有这方面的要求，可以设置SkipDefaultTransaction为true来禁用它。
-		SkipDefaultTransaction: true,
-		Logger:                 Log,
+		//SkipDefaultTransaction: true,
+		Logger: Log,
 		//执行任何 SQL 时都会创建一个 prepared statement 并将其缓存，以提高后续执行的效率
 		PrepareStmt: option.PrepareStmt,
 		NamingStrategy: schema.NamingStrategy{

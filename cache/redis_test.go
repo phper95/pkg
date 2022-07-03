@@ -33,10 +33,7 @@ func TestGet(t *testing.T) {
 	}
 	redisClient := GetRedisClient(DefaultRedisClient)
 	redisClient.Set(key, userByte, time.Minute)
-	val, err := redisClient.Get(key)
-	if err != nil {
-		t.Error("redisClient.Get error", val, err)
-	}
+	val, _ := redisClient.GetStr(key)
 	output := UserTest{}
 	err = compression.UnmarshalDataFromJsonWithGzip([]byte(val), &output)
 	if err != nil {
@@ -78,7 +75,6 @@ func TestBitOp(t *testing.T) {
 	if !assert.EqualValues(t, count, 2) {
 		t.Error("count except 2 but ", count)
 	}
-	b, err := redisClient.Delete(key)
-	t.Log(b, err)
-	t.Log(res)
+	err = redisClient.Delete(key)
+	t.Log(res, err)
 }
