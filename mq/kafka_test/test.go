@@ -7,6 +7,9 @@ import (
 	"gitee.com/phper95/pkg/mq"
 	"github.com/Shopify/sarama"
 	"go.uber.org/zap"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -16,7 +19,7 @@ var (
 )
 
 func main() {
-	//produceAsyncMsg()
+	produceAsyncMsg()
 	//produceSyncMsg()
 	consumeMsg()
 }
@@ -73,7 +76,13 @@ func consumeMsg() {
 	if err != nil {
 		fmt.Println(err)
 	}
-	select {}
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	select {
+	case s := <-signals:
+		mq.KafkaStdLogger.Println("kafka test receive system signal:", s)
+		return
+	}
 }
 
 func msgHandler(message *sarama.ConsumerMessage) (bool, error) {

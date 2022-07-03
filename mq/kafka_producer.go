@@ -156,7 +156,7 @@ func InitAsyncKafkaProducer(name string, hosts []string, config *sarama.Config) 
 		asyncProducer.ReConnect = make(chan bool)
 		asyncProducer.AsyncProducer = &producer
 		asyncProducer.Status = KafkaProducerConnected
-		logger.Info("AsyncKakfaProducer  connected name " + name)
+		KafkaStdLogger.Println("AsyncKakfaProducer  connected name ", name)
 	}
 
 	go asyncProducer.keepConnect()
@@ -185,6 +185,9 @@ func GetKafkaAsyncProducer(name string) *AsyncProducer {
 
 //检查同步生产者的连接状态,如果断开链接则尝试重连
 func (syncProducer *SyncProducer) keepConnect() {
+	defer func() {
+		KafkaStdLogger.Println("syncProducer keepConnect exited")
+	}()
 	for {
 		if syncProducer.Status == KafkaProducerClosed {
 			return
@@ -195,7 +198,7 @@ func (syncProducer *SyncProducer) keepConnect() {
 				break
 			}
 
-			logger.Warn("kafka syncProducer ReConnecting... name " + syncProducer.Name)
+			KafkaStdLogger.Println("kafka syncProducer ReConnecting... name " + syncProducer.Name)
 			var producer sarama.SyncProducer
 		syncBreakLoop:
 			for {
@@ -213,20 +216,20 @@ func (syncProducer *SyncProducer) keepConnect() {
 						syncProducer.Status = KafkaProducerConnected
 					}
 					syncProducer.StatusLock.Unlock()
-					logger.Info("kafka syncProducer ReConnected, name:" + syncProducer.Name)
+					KafkaStdLogger.Println("kafka syncProducer ReConnected, name:", syncProducer.Name)
 					break syncBreakLoop
 				case breaker.ErrBreakerOpen:
-					logger.Warn("kafka connect fail, broker is open")
+					KafkaStdLogger.Println("kafka connect fail, broker is open")
 					//2s后重连，此时breaker刚好 half close
 					if syncProducer.Status == KafkaProducerDisconnected {
 						time.AfterFunc(2*time.Second, func() {
-							logger.Warn("kafka begin to ReConnect ,because of  ErrBreakerOpen ")
+							KafkaStdLogger.Println("kafka begin to ReConnect ,because of  ErrBreakerOpen ")
 							syncProducer.ReConnect <- true
 						})
 					}
 					break syncBreakLoop
 				default:
-					logger.Error("kafka ReConnect error, name:"+syncProducer.Name, zap.Error(err))
+					KafkaStdLogger.Println("kafka ReConnect error, name:", syncProducer.Name, err)
 				}
 			}
 		}
@@ -235,6 +238,9 @@ func (syncProducer *SyncProducer) keepConnect() {
 
 //同步生产者状态检测
 func (syncProducer *SyncProducer) check() {
+	defer func() {
+		KafkaStdLogger.Println("syncProducer check exited")
+	}()
 	// Trap SIGINT to trigger a shutdown.
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
@@ -249,7 +255,7 @@ func (syncProducer *SyncProducer) check() {
 			//if (*syncProducer.SyncProducer) != nil {
 			//	err := (*syncProducer.SyncProducer).Close()
 			//	if err != nil {
-			//		logger.Error("kafka syncProducer close error", zap.Error(err))
+			//		KafkaStdLogger.Println("kafka syncProducer close error", err)
 			//	}
 			//}
 			syncProducer.Status = KafkaProducerClosed
@@ -302,7 +308,7 @@ func (syncProducer *SyncProducer) Send(msg *sarama.ProducerMessage) (partition i
 //检查kafka连接状态,如果断开链接则尝试重连
 func (asyncProducer *AsyncProducer) keepConnect() {
 	defer func() {
-		logger.Warn("asyncProducer keepConnect exited")
+		KafkaStdLogger.Println("asyncProducer keepConnect exited")
 	}()
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
@@ -312,11 +318,11 @@ func (asyncProducer *AsyncProducer) keepConnect() {
 		}
 		select {
 		case s := <-signals:
-			logger.Warn("kafka async producer receive system signal:" + s.String() + "; name:" + asyncProducer.Name)
+			KafkaStdLogger.Println("kafka async producer receive system signal:" + s.String() + "; name:" + asyncProducer.Name)
 			//if (*asyncProducer.AsyncProducer) != nil {
 			//	err := (*asyncProducer.AsyncProducer).Close()
 			//	if err != nil {
-			//		logger.Error("kafka syncProducer close error", zap.Error(err))
+			//		KafkaStdLogger.Println("kafka syncProducer close error", zap.Error(err))
 			//	}
 			//}
 			asyncProducer.Status = KafkaProducerClosed
@@ -326,7 +332,7 @@ func (asyncProducer *AsyncProducer) keepConnect() {
 				break
 			}
 
-			logger.Warn("kafka syncProducer ReConnecting... name" + asyncProducer.Name)
+			KafkaStdLogger.Println("kafka syncProducer ReConnecting... name" + asyncProducer.Name)
 			var producer sarama.AsyncProducer
 		asyncBreakLoop:
 			for {
@@ -347,17 +353,17 @@ func (asyncProducer *AsyncProducer) keepConnect() {
 					logger.Info("kafka syncProducer ReConnected, name:" + asyncProducer.Name)
 					break asyncBreakLoop
 				case breaker.ErrBreakerOpen:
-					logger.Warn("kafka connect fail, broker is open")
+					KafkaStdLogger.Println("kafka connect fail, broker is open")
 					//2s后重连，此时breaker刚好 half close
 					if asyncProducer.Status == KafkaProducerDisconnected {
 						time.AfterFunc(2*time.Second, func() {
-							logger.Warn("kafka begin to ReConnect ,because of  ErrBreakerOpen ")
+							KafkaStdLogger.Println("kafka begin to ReConnect ,because of  ErrBreakerOpen ")
 							asyncProducer.ReConnect <- true
 						})
 					}
 					break asyncBreakLoop
 				default:
-					logger.Error("kafka ReConnect error, name:"+asyncProducer.Name, zap.Error(err))
+					KafkaStdLogger.Println("kafka ReConnect error, name:"+asyncProducer.Name, zap.Error(err))
 				}
 			}
 		}
@@ -367,7 +373,7 @@ func (asyncProducer *AsyncProducer) keepConnect() {
 //异步生产者状态检测
 func (asyncProducer *AsyncProducer) check() {
 	defer func() {
-		logger.Warn("asyncProducer check exited")
+		KafkaStdLogger.Println("asyncProducer check exited")
 	}()
 	for {
 		switch asyncProducer.Status {
@@ -386,7 +392,7 @@ func (asyncProducer *AsyncProducer) check() {
 			case msg := <-(*asyncProducer.AsyncProducer).Successes():
 				logger.Info("Success produce message  ", zap.Any(msg.Topic, msg.Value))
 			case err := <-(*asyncProducer.AsyncProducer).Errors():
-				logger.Error("message send error", zap.Error(err))
+				KafkaStdLogger.Println("message send error", zap.Error(err))
 				if errors.Is(err, sarama.ErrOutOfBrokers) || errors.Is(err, sarama.ErrNotConnected) {
 					// 连接中断触发重连，捕捉不到 EOF
 					asyncProducer.StatusLock.Lock()
@@ -397,11 +403,11 @@ func (asyncProducer *AsyncProducer) check() {
 					asyncProducer.StatusLock.Unlock()
 				}
 			case s := <-signals:
-				logger.Warn("kafka async producer receive system signal:" + s.String() + "; name:" + asyncProducer.Name)
+				KafkaStdLogger.Println("kafka async producer receive system signal:" + s.String() + "; name:" + asyncProducer.Name)
 				//if (*asyncProducer.AsyncProducer) != nil {
 				//	err := (*asyncProducer.AsyncProducer).Close()
 				//	if err != nil {
-				//		logger.Error("kafka syncProducer close error", zap.Error(err))
+				//		KafkaStdLogger.Println("kafka syncProducer close error", zap.Error(err))
 				//	}
 				//}
 				asyncProducer.Status = KafkaProducerClosed
