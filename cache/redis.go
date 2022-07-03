@@ -198,7 +198,7 @@ func (r *Redis) Get(key string) interface{} {
 
 	if r.client != nil {
 		value, err := r.client.Get(key).Result()
-		if err != nil {
+		if err != nil && err != redis.Nil {
 			CacheStdLogger.Printf("redis get key: %s err %v", key, err)
 
 		}
@@ -206,7 +206,7 @@ func (r *Redis) Get(key string) interface{} {
 	}
 
 	value, err := r.clusterClient.Get(key).Result()
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		CacheStdLogger.Printf("redis get key: %s err %v", key, err)
 	}
 	return value
@@ -237,14 +237,14 @@ func (r *Redis) GetStr(key string) (value string, err error) {
 
 	if r.client != nil {
 		value, err = r.client.Get(key).Result()
-		if err != nil {
+		if err != nil && err != redis.Nil {
 			return "", errors.Wrapf(err, "redis get key: %s err", key)
 		}
 		return
 	}
 
 	value, err = r.clusterClient.Get(key).Result()
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		return "", errors.Wrapf(err, "redis get key: %s err", key)
 	}
 	return
@@ -257,13 +257,13 @@ func (r *Redis) TTL(key string) (time.Duration, error) {
 	}
 	if r.client != nil {
 		ttl, err := r.client.TTL(key).Result()
-		if err != nil {
+		if err != nil && err != redis.Nil {
 			return -1, errors.Wrapf(err, "redis get key: %s err", key)
 		}
 		return ttl, nil
 	}
 	ttl, err := r.clusterClient.TTL(key).Result()
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		return -1, errors.Wrapf(err, "redis get key: %s err", key)
 	}
 
@@ -315,13 +315,13 @@ func (r *Redis) IsExist(key string) bool {
 	}
 	if r.client != nil {
 		value, err := r.client.Exists(key).Result()
-		if err != nil {
+		if err != nil && err != redis.Nil {
 			CacheStdLogger.Printf("cmd : Exists ; key : %s ; err : %v", key, err)
 		}
 		return value > 0
 	}
 	value, err := r.clusterClient.Exists(key).Result()
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		CacheStdLogger.Printf("cmd : Exists ; key : %s ; err : %v", key, err)
 	}
 	return value > 0
