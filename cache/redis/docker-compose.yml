@@ -1,0 +1,15 @@
+version: "3.3"
+services:
+    redis:
+        image: redis:6.0.9-buster
+        container_name: redis
+        restart: always
+        ports:
+          - "6379:6379"
+        volumes:
+          - ./redis.conf:/etc/redis/redis.conf:rw
+          - ./redis-server.log:/var/log/redis/redis-server.log:rw
+          - ./data:/data:rw
+        command:
+          # 执行的命令
+          redis-server /etc/redis/redis.conf --appendonly yes
