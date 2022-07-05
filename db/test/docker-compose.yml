@@ -9,8 +9,8 @@ services:
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_USER: root
+      MYSQL_ROOT_PASSWORD: admin23
+      MYSQL_USER: test
       MYSQL_PASS: admin123
       TZ: Asia/Shanghai
     command:
