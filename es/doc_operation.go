@@ -13,6 +13,7 @@ const (
 	VersionTypeInternal = "internal"
 	DefaultRefresh      = "false"
 	RefreshWaitFor      = "wait_for"
+	RefreshTrue         = "true"
 	DefaultScriptLang   = "painless"
 )
 
@@ -178,6 +179,16 @@ func (c *Client) Update(ctx context.Context, indexName, id, routing string, upda
 	_, err := updateService.Doc(update).Do(ctx)
 	return err
 }
+
+func (c *Client) UpdateRefresh(ctx context.Context, indexName, id, routing string, update map[string]interface{}) error {
+	updateService := c.Client.Update().Index(indexName).Id(id).Refresh(RefreshTrue)
+	if len(routing) > 0 {
+		updateService.Routing(routing)
+	}
+	_, err := updateService.Doc(update).Do(ctx)
+	return err
+}
+
 func (c *Client) UpdateByQuery(ctx context.Context, indexName string, routings []string, query elastic.Query, script string, scriptParams map[string]interface{}) (*elastic.BulkIndexByScrollResponse, error) {
 	updateByqueryService := c.Client.UpdateByQuery(indexName).Query(query).Script(elastic.NewScript(script).Params(scriptParams).Lang(DefaultScriptLang)).Refresh(DefaultRefresh).ProceedOnVersionConflict()
 	if len(routings) > 0 {
