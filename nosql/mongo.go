@@ -53,6 +53,7 @@ func InitMongoClient(clientName, username, password string, addrs []string, mong
 	mongoURL := fmt.Sprintf("mongodb://%s%s", auth, hosts)
 	//MongoStdLogger.Print("mongoURL : ", mongoURL)
 	opt := options.Client().ApplyURI(mongoURL)
+	opt.SetReadPreference(readpref.SecondaryPreferred()) //优先读从库
 	//opt.SetMaxConnIdleTime(30 * time.Minute)   //指定连接可以保持空闲的最时间（默认无限制）
 	opt.SetMaxPoolSize(mongoPoolLimit)     //使用最大的连接数
 	opt.SetMinPoolSize(mongoPoolLimit / 4) //最小连接数，默认是0
