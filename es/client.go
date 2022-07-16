@@ -153,6 +153,7 @@ func InitClientWithOptions(clientName string, urls []string, username string, pa
 	if len(opt.Scheme) > 0 {
 		esOptions = append(esOptions, elastic.SetScheme(opt.Scheme))
 		esOptions = append(esOptions, elastic.SetHttpClient(getDefaultClient()))
+		esOptions = append(esOptions, elastic.SetHealthcheck(false))
 	}
 
 	client.QueryLogEnable = opt.QueryLogEnable
