@@ -3,8 +3,8 @@ package es
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"github.com/olivere/elastic/v7"
-	"go.uber.org/zap"
 	"log"
 	"net/http"
 	"os"
@@ -280,7 +280,8 @@ func (c *Client) newClient(options []elastic.ClientOptionFunc) error {
 
 func defaultBulkFunc(executionId int64, requests []elastic.BulkableRequest, response *elastic.BulkResponse, err error) {
 	if err != nil || (response != nil && response.Errors) {
-		EStdLogger.Printf("executionId: %d ;requests : %v; response : %+v ; err : %+v", executionId, requests, zap.Any("", response), err)
+		res, _ := json.Marshal(response)
+		EStdLogger.Printf("executionId: %d ;requests : %v; response : %s ; err : %+v", executionId, requests, res, err)
 	}
 
 }
