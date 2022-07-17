@@ -137,6 +137,15 @@ func (c *Client) Delete(ctx context.Context, indexName, id, routing string) erro
 	return err
 }
 
+func (c *Client) DeleteRefresh(ctx context.Context, indexName, id, routing string) error {
+	deleteService := c.Client.Delete().Index(indexName).Id(id).Refresh(RefreshTrue)
+	if len(routing) > 0 {
+		deleteService.Routing(routing)
+	}
+	_, err := deleteService.Do(ctx)
+	return err
+}
+
 func (c *Client) DeleteWithVersion(ctx context.Context, indexName, id, routing string, version int64) error {
 	deleteService := c.Client.Delete().Index(indexName).VersionType(DefaultVersionType).Version(version).Refresh(DefaultRefresh).Id(id)
 	if len(routing) > 0 {
@@ -163,6 +172,7 @@ func (c *Client) BulkDelete(indexName, id, routing string) {
 	}
 	c.BulkProcessor.Add(bulkDeleteRequest)
 }
+
 func (c *Client) BulkDeleteWithVersion(indexName, id, routing string, version int64) {
 	bulkDeleteRequest := elastic.NewBulkDeleteRequest().Index(indexName).Id(id).VersionType(DefaultVersionType).Version(version)
 	if len(routing) > 0 {
