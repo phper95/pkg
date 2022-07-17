@@ -4,6 +4,7 @@ services:
     image: wurstmeister/zookeeper
     ports:
       - "2181:2181"
+    restart: always
   kafka:
     image: wurstmeister/kafka
     depends_on: [ zookeeper ]
@@ -13,3 +14,4 @@ services:
       KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
       KAFKA_CREATE_TOPICS: "shop-order:1:1"
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    restart: always
