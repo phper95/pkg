@@ -278,8 +278,7 @@ func (c *Client) newClient(options []elastic.ClientOptionFunc) error {
 }
 
 func defaultBulkFunc(executionId int64, requests []elastic.BulkableRequest, response *elastic.BulkResponse, err error) {
-	EStdLogger.Printf("executionId: %d ;requests : %v; response : %+v ; err : %+v", executionId, requests, response, err)
-	if err != nil {
+	if err != nil || (response != nil && response.Errors) {
 		EStdLogger.Printf("executionId: %d ;requests : %v; response : %+v ; err : %+v", executionId, requests, response, err)
 	}
 
