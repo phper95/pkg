@@ -29,7 +29,7 @@ type option struct {
 	disableConsole bool
 }
 
-var logger *zap.Logger
+var Logger *zap.Logger
 
 // WithDebugLevel only greater than 'level' will output
 func WithDebugLevel() Option {
@@ -116,7 +116,7 @@ func WithDisableConsole() Option {
 	}
 }
 
-// NewLogger return a encoder zap logger,
+// InitLogger
 func InitLogger(opts ...Option) {
 	opt := &option{level: DefaultLevel, fields: make(map[string]string)}
 	for _, f := range opts {
@@ -134,7 +134,7 @@ func InitLogger(opts ...Option) {
 	encoderConfig := zapcore.EncoderConfig{
 		TimeKey:       "time",
 		LevelKey:      "level",
-		NameKey:       "logger", // used by logger.Named(key); optional; useless
+		NameKey:       "Logger", // used by Logger.Named(key); optional; useless
 		CallerKey:     "caller",
 		MessageKey:    "msg",
 		StacktraceKey: "stacktrace", // use by zap.AddStacktrace; optional; useless
@@ -187,44 +187,44 @@ func InitLogger(opts ...Option) {
 		)
 	}
 
-	logger = zap.New(core,
+	Logger = zap.New(core,
 		zap.AddCaller(),
 		zap.ErrorOutput(stderr),
 	)
 
 	for key, value := range opt.fields {
-		logger = logger.WithOptions(zap.Fields(zapcore.Field{Key: key, Type: zapcore.StringType, String: value}))
+		Logger = Logger.WithOptions(zap.Fields(zapcore.Field{Key: key, Type: zapcore.StringType, String: value}))
 	}
 }
 
 func GetLogger() *zap.Logger {
-	return logger
+	return Logger
 }
 func setLogger() {
-	if logger == nil {
-		logger, _ = zap.NewProduction(zap.AddStacktrace(zapcore.LevelEnabler(zapcore.ErrorLevel)))
+	if Logger == nil {
+		Logger, _ = zap.NewProduction(zap.AddStacktrace(zapcore.LevelEnabler(zapcore.ErrorLevel)))
 	}
 }
 
 func Info(msg string, fields ...zap.Field) {
 	setLogger()
-	logger.Info(msg, fields...)
+	Logger.Info(msg, fields...)
 }
 func Debug(msg string, fields ...zap.Field) {
 	setLogger()
-	logger.Debug(msg, fields...)
+	Logger.Debug(msg, fields...)
 }
 func Warn(msg string, fields ...zap.Field) {
 	setLogger()
-	logger.Warn(msg, fields...)
+	Logger.Warn(msg, fields...)
 }
 func Error(msg string, fields ...zap.Field) {
 	setLogger()
-	logger.Error(msg, fields...)
+	Logger.Error(msg, fields...)
 }
 
 func Sync() {
-	logger.Sync()
+	Logger.Sync()
 }
 
 // Meta key-value
