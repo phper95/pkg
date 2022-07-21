@@ -3,6 +3,7 @@ package es
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"github.com/olivere/elastic/v7"
 	"log"
 	"net/http"
@@ -153,6 +154,7 @@ func InitClientWithOptions(clientName string, urls []string, username string, pa
 	if len(opt.Scheme) > 0 {
 		esOptions = append(esOptions, elastic.SetScheme(opt.Scheme))
 		esOptions = append(esOptions, elastic.SetHttpClient(getDefaultClient()))
+		esOptions = append(esOptions, elastic.SetHealthcheck(false))
 	}
 
 	client.QueryLogEnable = opt.QueryLogEnable
@@ -277,8 +279,9 @@ func (c *Client) newClient(options []elastic.ClientOptionFunc) error {
 }
 
 func defaultBulkFunc(executionId int64, requests []elastic.BulkableRequest, response *elastic.BulkResponse, err error) {
-	if err != nil {
-		EStdLogger.Print("executionId:", executionId, "requests : ", requests, "response:", response, "error", err)
+	if err != nil || (response != nil && response.Errors) {
+		res, _ := json.Marshal(response)
+		EStdLogger.Printf("executionId: %d ;requests : %v; response : %s ; err : %+v", executionId, requests, res, err)
 	}
 
 }
