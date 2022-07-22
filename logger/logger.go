@@ -117,7 +117,7 @@ func WithDisableConsole() Option {
 }
 
 // InitLogger
-func InitLogger(opts ...Option) {
+func InitLogger(opts ...Option) *zap.Logger {
 	opt := &option{level: DefaultLevel, fields: make(map[string]string)}
 	for _, f := range opts {
 		if f != nil {
@@ -195,6 +195,7 @@ func InitLogger(opts ...Option) {
 	for key, value := range opt.fields {
 		Logger = Logger.WithOptions(zap.Fields(zapcore.Field{Key: key, Type: zapcore.StringType, String: value}))
 	}
+	return Logger
 }
 
 func GetLogger() *zap.Logger {
