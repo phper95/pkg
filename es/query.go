@@ -14,7 +14,8 @@ type Mget struct {
 	Routing string
 }
 type queryOption struct {
-	Orders               map[string]bool
+	//为了确保排序字段有序性，这里使用切片（map是无序的，会导致实际字段排序顺序不符合预期）
+	Orders               []map[string]bool
 	Highlight            *elastic.Highlight
 	Profile              bool
 	EnableDSL            bool
@@ -28,7 +29,7 @@ type QueryOption func(queryOption *queryOption)
 
 const DefaultPreference = "_local"
 
-func WithOrders(orders map[string]bool) QueryOption {
+func WithOrders(orders []map[string]bool) QueryOption {
 	return func(opt *queryOption) {
 		opt.Orders = orders
 	}
@@ -132,8 +133,10 @@ func (c *Client) Query(ctx context.Context, indexName string, routings []string,
 	searchSource := elastic.NewSearchSource()
 	searchSource = searchSource.FetchSourceContext(fetchSourceContext).Query(query).From(from).Size(size)
 	if len(queryOpt.Orders) > 0 {
-		for field, order := range queryOpt.Orders {
-			searchSource.Sort(field, order)
+		for _, orderM := range queryOpt.Orders {
+			for field, order := range orderM {
+				searchSource.Sort(field, order)
+			}
 		}
 	}
 	if queryOpt.Highlight != nil {
