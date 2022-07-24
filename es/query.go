@@ -184,13 +184,10 @@ func (c *Client) ScrollQuery(ctx context.Context, index []string, typeStr string
 	searchSource = searchSource.FetchSourceContext(fetchSourceContext).Query(query)
 
 	if len(queryOpt.Orders) > 0 {
-		for field, order := range queryOpt.Orders {
-			searchSource.Sort(field, order)
-		}
-	}
-	if len(queryOpt.Orders) > 0 {
-		for field, order := range queryOpt.Orders {
-			searchSource.Sort(field, order)
+		for _, orderM := range queryOpt.Orders {
+			for field, order := range orderM {
+				searchSource.Sort(field, order)
+			}
 		}
 	}
 	if queryOpt.Highlight != nil {
