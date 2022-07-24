@@ -22,6 +22,7 @@ type queryOption struct {
 	IncludeFields        []string
 	SlowQueryMillisecond int64
 	Preference           string
+	FetchSource          *bool
 }
 type QueryOption func(queryOption *queryOption)
 
@@ -73,6 +74,12 @@ func WithPreference(preference string) QueryOption {
 	}
 }
 
+func WithFetchSource(fetchSource bool) QueryOption {
+	return func(opt *queryOption) {
+		opt.FetchSource = &fetchSource
+	}
+}
+
 func (c *Client) Get(ctx context.Context, indexName, id, routing string) (*elastic.GetResult, error) {
 
 	//由于副本分片也能提供数据查询，所以当查询请求能从本地分片获取数据时，就不需要转发到其他节点获取数据了，
@@ -109,7 +116,11 @@ func (c *Client) Query(ctx context.Context, indexName string, routings []string,
 	}
 
 	//设置Source
-	fetchSourceContext := elastic.NewFetchSourceContext(true)
+	fetchSource := true
+	if queryOpt.FetchSource != nil && *queryOpt.FetchSource == false {
+		fetchSource = false
+	}
+	fetchSourceContext := elastic.NewFetchSourceContext(fetchSource)
 	if len(queryOpt.IncludeFields) > 0 {
 		fetchSourceContext.Include(queryOpt.IncludeFields...)
 	}
@@ -134,6 +145,12 @@ func (c *Client) Query(ctx context.Context, indexName string, routings []string,
 	if len(routings) > 0 {
 		searchService.Routing(routings...)
 	}
+	if len(queryOpt.Preference) > 0 {
+		searchService.Preference(queryOpt.Preference)
+	} else {
+		searchService.Preference(DefaultPreference)
+	}
+
 	res, err := searchService.Do(ctx)
 	//获取查询语句
 	src, _ := searchSource.Source()
@@ -155,7 +172,11 @@ func (c *Client) ScrollQuery(ctx context.Context, index []string, typeStr string
 			f(queryOpt)
 		}
 	}
-	fetchSourceContext := elastic.NewFetchSourceContext(true)
+	fetchSource := true
+	if queryOpt.FetchSource != nil && *queryOpt.FetchSource == false {
+		fetchSource = false
+	}
+	fetchSourceContext := elastic.NewFetchSourceContext(fetchSource)
 	searchSource := elastic.NewSearchSource()
 	searchSource = searchSource.FetchSourceContext(fetchSourceContext).Query(query)
 
@@ -182,6 +203,11 @@ func (c *Client) ScrollQuery(ctx context.Context, index []string, typeStr string
 	scrollService := c.Client.Scroll(index...).SearchSource(searchSource).Size(size).Preference(DefaultPreference)
 	if len(routings) > 0 {
 		scrollService.Routing(routings...)
+	}
+	if len(queryOpt.Preference) > 0 {
+		scrollService.Preference(queryOpt.Preference)
+	} else {
+		scrollService.Preference(DefaultPreference)
 	}
 	//scroll保存在ES集群中的上下文信息会占用大量内存资源，虽然会在一段时间后自动清理，当我们知道scroll结束后,
 	//需要手动调用clear释放资源
