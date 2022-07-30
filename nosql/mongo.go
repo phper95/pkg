@@ -22,20 +22,20 @@ type stdLogger interface {
 	Println(v ...interface{})
 }
 
-type mgClient struct {
+type MgClient struct {
 	*mongo.Client
 }
 
 type CursorCallBackFunc func(res interface{}, err error)
 
 var (
-	mongoClients   = map[string]*mgClient{}
+	mongoClients   = map[string]*MgClient{}
 	MongoStdLogger stdLogger
 )
 
 func init() {
 	MongoStdLogger = log.New(os.Stdout, "[Mongo] ", log.LstdFlags|log.Lshortfile)
-	mongoClients = make(map[string]*mgClient, 0)
+	mongoClients = make(map[string]*MgClient, 0)
 }
 
 const (
@@ -70,12 +70,12 @@ func InitMongoClient(clientName, username, password string, addrs []string, mong
 	if err := client.Ping(getContext(), readpref.Primary()); err != nil {
 		return err
 	}
-	mongoClient := mgClient{client}
+	mongoClient := MgClient{client}
 	mongoClients[clientName] = &mongoClient
 	return nil
 }
 
-func GetMongoClient(clientName string) *mgClient {
+func GetMongoClient(clientName string) *MgClient {
 	if client, ok := mongoClients[clientName]; ok {
 		return client
 	}
@@ -85,7 +85,7 @@ func GetMongoClient(clientName string) *mgClient {
 
 // example
 //InsertMany("db","table",bson.D{{"name", "Alice"}},bson.D{{"name", "Bob"}})
-func (client *mgClient) InsertMany(db string, table string, docs ...interface{}) error {
+func (client *MgClient) InsertMany(db string, table string, docs ...interface{}) error {
 	_, err := client.Database(db).Collection(table).InsertMany(getContext(), docs)
 	return err
 }
@@ -102,7 +102,7 @@ func (client *mgClient) InsertMany(db string, table string, docs ...interface{})
 //if we.HasErrorCode(11000) {
 // TO DO ...
 //}
-func (client *mgClient) InsertManyTryBest(db string, table string, docs ...interface{}) error {
+func (client *MgClient) InsertManyTryBest(db string, table string, docs ...interface{}) error {
 	var err error
 	collection := client.Database(db).Collection(table)
 	ordered := false
@@ -116,14 +116,14 @@ func (client *mgClient) InsertManyTryBest(db string, table string, docs ...inter
 }
 
 // Upsert doc是bson格式
-func (client *mgClient) Upsert(db string, table string, filter bson.D, doc interface{}) error {
+func (client *MgClient) Upsert(db string, table string, filter bson.D, doc interface{}) error {
 	collection := client.Database(db).Collection(table)
 	//设置Upset模式
 	opts := options.FindOneAndUpdate().SetUpsert(true)
 	return collection.FindOneAndUpdate(getContext(), filter, bson.D{{"$set", doc}}, opts).Err()
 }
 
-func (client *mgClient) ReplaceOne(db string, table string, filter bson.D, doc interface{}) error {
+func (client *MgClient) ReplaceOne(db string, table string, filter bson.D, doc interface{}) error {
 	collection := client.Database(db).Collection(table)
 
 	//设置Replace设置项
@@ -135,7 +135,7 @@ func (client *mgClient) ReplaceOne(db string, table string, filter bson.D, doc i
 // example
 // filter := bson.D{{"_id", id}}
 //	update := bson.D{{"email", "newemail@example.com"}}
-func (client *mgClient) UpdateOne(db string, table string, filter bson.D, update interface{}) error {
+func (client *MgClient) UpdateOne(db string, table string, filter bson.D, update interface{}) error {
 	_, err := client.Database(db).Collection(table).UpdateOne(getContext(), filter, bson.M{"$set": update}, nil)
 	return err
 }
@@ -143,12 +143,12 @@ func (client *mgClient) UpdateOne(db string, table string, filter bson.D, update
 //example
 //filter := bson.D{{"birthday", today}}
 //update := bson.D{{"$inc", bson.D{{"age", 1}}}}
-func (client *mgClient) UpdateMany(db string, table string, filter bson.D, update interface{}) error {
+func (client *MgClient) UpdateMany(db string, table string, filter bson.D, update interface{}) error {
 	_, err := client.Database(db).Collection(table).UpdateMany(getContext(), filter, update, nil)
 	return err
 }
 
-func (client *mgClient) Find(db string, table string, filter bson.D, result interface{}) (bool, error) {
+func (client *MgClient) Find(db string, table string, filter bson.D, result interface{}) (bool, error) {
 	//选择数据库和集合
 	var (
 		cursor *mongo.Cursor
@@ -167,7 +167,7 @@ func (client *mgClient) Find(db string, table string, filter bson.D, result inte
 	return true, nil
 }
 
-func (client *mgClient) FindWithOrder(db string, table string, filter bson.D, orders map[string]int, result interface{}) (bool, error) {
+func (client *MgClient) FindWithOrder(db string, table string, filter bson.D, orders map[string]int, result interface{}) (bool, error) {
 	//选择数据库和集合
 	var (
 		cursor *mongo.Cursor
@@ -193,7 +193,7 @@ func (client *mgClient) FindWithOrder(db string, table string, filter bson.D, or
 
 // FindOne 查询一条数据
 // query example bson.D{{"name", 1}, {"age", 1}}
-func (client *mgClient) FindOne(db, table string, filter bson.D, resultObj interface{}) error {
+func (client *MgClient) FindOne(db, table string, filter bson.D, resultObj interface{}) error {
 	result := client.Database(db).Collection(table).FindOne(getContext(), filter)
 	if result.Err() != nil && result.Err() != mongo.ErrNoDocuments {
 		return result.Err()
@@ -204,7 +204,7 @@ func (client *mgClient) FindOne(db, table string, filter bson.D, resultObj inter
 	return nil
 }
 
-func (client *mgClient) FindByID(db, table string, id interface{}, resultObj interface{}) error {
+func (client *MgClient) FindByID(db, table string, id interface{}, resultObj interface{}) error {
 	result := client.Database(db).Collection(table).FindOne(getContext(), bson.D{{"_id", id}})
 	if result.Err() != nil && result.Err() != mongo.ErrNoDocuments {
 		return result.Err()
@@ -212,7 +212,7 @@ func (client *mgClient) FindByID(db, table string, id interface{}, resultObj int
 	return result.Decode(resultObj)
 }
 
-func (client *mgClient) FindWithOpts(db string, table string, offset, limit int64, filter interface{}, opts *options.FindOptions, result interface{}) (bool, error) {
+func (client *MgClient) FindWithOpts(db string, table string, offset, limit int64, filter interface{}, opts *options.FindOptions, result interface{}) (bool, error) {
 	var (
 		cursor *mongo.Cursor
 		err    error
@@ -235,7 +235,7 @@ func (client *mgClient) FindWithOpts(db string, table string, offset, limit int6
 	return true, nil
 }
 
-func (client *mgClient) FindUseCursor(db string, table string, batchSize int32, filter bson.D, rowType interface{}, cursorCallbackFunc CursorCallBackFunc) error {
+func (client *MgClient) FindUseCursor(db string, table string, batchSize int32, filter bson.D, rowType interface{}, cursorCallbackFunc CursorCallBackFunc) error {
 	var (
 		cursor *mongo.Cursor
 		err    error
@@ -259,7 +259,7 @@ func (client *mgClient) FindUseCursor(db string, table string, batchSize int32, 
 	return err
 }
 
-func (client *mgClient) FindUseCursorWithOptions(db string, table string, batchSize int32, filter bson.D, rowType interface{}, opts *options.FindOptions, cursorCallbackFunc CursorCallBackFunc) error {
+func (client *MgClient) FindUseCursorWithOptions(db string, table string, batchSize int32, filter bson.D, rowType interface{}, opts *options.FindOptions, cursorCallbackFunc CursorCallBackFunc) error {
 	var (
 		cursor *mongo.Cursor
 		err    error
@@ -282,7 +282,7 @@ func (client *mgClient) FindUseCursorWithOptions(db string, table string, batchS
 	return err
 }
 
-func (client *mgClient) AggregateUseCursor(db string, table string, queries []bson.D, rowType interface{}, cursorCallbackFunc CursorCallBackFunc) error {
+func (client *MgClient) AggregateUseCursor(db string, table string, queries []bson.D, rowType interface{}, cursorCallbackFunc CursorCallBackFunc) error {
 	pipeline := mongo.Pipeline{}
 	for _, q := range queries {
 		pipeline = append(pipeline, q)
@@ -298,32 +298,32 @@ func (client *mgClient) AggregateUseCursor(db string, table string, queries []bs
 	return err
 }
 
-func (client *mgClient) DeleteOne(db string, table string, filter bson.D) error {
+func (client *MgClient) DeleteOne(db string, table string, filter bson.D) error {
 	_, err := client.Database(db).Collection(table).DeleteOne(getContext(), filter, nil)
 	return err
 }
 
-func (client *mgClient) DeleteMany(db string, table string, filter bson.D) error {
+func (client *MgClient) DeleteMany(db string, table string, filter bson.D) error {
 	_, err := client.Database(db).Collection(table).DeleteMany(getContext(), filter, nil)
 	return err
 }
 
-func (client *mgClient) QueryCount(db, table string, filter bson.D, defaultVal int) (int64, error) {
+func (client *MgClient) QueryCount(db, table string, filter bson.D, defaultVal int) (int64, error) {
 	return client.Database(db).Collection(table).CountDocuments(getContext(), filter, nil)
 }
 
 //通过metadata获取整个集合中总记录数
-func (client *mgClient) EstimatedDocumentCount(db, table string) (int64, error) {
+func (client *MgClient) EstimatedDocumentCount(db, table string) (int64, error) {
 	return client.Database(db).Collection(table).EstimatedDocumentCount(getContext(), nil)
 }
 
-func (client *mgClient) Distinct(db, table string, filter bson.D, distinctField string) (result []interface{}, err error) {
+func (client *MgClient) Distinct(db, table string, filter bson.D, distinctField string) (result []interface{}, err error) {
 	collection := client.Database(db).Collection(table)
 	return collection.Distinct(getContext(), distinctField, filter, nil)
 }
 
 // CreateIndex .
-func (client *mgClient) CreateIndex(db, table, key string, uniqueKey bool) error {
+func (client *MgClient) CreateIndex(db, table, key string, uniqueKey bool) error {
 	_, err := client.Database(db).Collection(table).Indexes().CreateOne(getContext(),
 		mongo.IndexModel{
 			Keys:    bsonx.Doc{{key, bsonx.Int32(-1)}},
@@ -333,7 +333,7 @@ func (client *mgClient) CreateIndex(db, table, key string, uniqueKey bool) error
 }
 
 // 创建多个索引
-func (client *mgClient) CreateMultiIndex(db, table string, keys []string, uniqueKey bool) error {
+func (client *MgClient) CreateMultiIndex(db, table string, keys []string, uniqueKey bool) error {
 	collection := client.Database(db).Collection(table)
 	doc := bsonx.Doc{}
 	for _, key := range keys {
@@ -348,7 +348,7 @@ func (client *mgClient) CreateMultiIndex(db, table string, keys []string, unique
 	return err
 }
 
-func (client *mgClient) Drop(db, table string) error {
+func (client *MgClient) Drop(db, table string) error {
 	err := client.Database(db).Collection(table).Drop(getContext())
 	return err
 }
@@ -358,7 +358,7 @@ func getContext() (ctx context.Context) {
 	return
 }
 
-func (client *mgClient) RenameTable(db, table, newTable string) error {
+func (client *MgClient) RenameTable(db, table, newTable string) error {
 	cmd := bson.D{
 		{"renameCollection", strings.Join([]string{db, table}, ".")},
 		{"to", strings.Join([]string{db, newTable}, ".")},
@@ -381,7 +381,7 @@ func (client *mgClient) RenameTable(db, table, newTable string) error {
 	}
 }
 
-func (client *mgClient) CopyTable(db, table, newTable string) (bool, error) {
+func (client *MgClient) CopyTable(db, table, newTable string) (bool, error) {
 	_, err := client.Database(db).Collection(table, options.Collection().SetReadPreference(readpref.Primary()).SetReadConcern(readconcern.Local())).Aggregate(getContext(), []interface{}{bson.M{"$out": newTable}})
 	if err != nil {
 		return false, err
@@ -390,7 +390,7 @@ func (client *mgClient) CopyTable(db, table, newTable string) (bool, error) {
 
 }
 
-func (client *mgClient) Close() {
+func (client *MgClient) Close() {
 	if client == nil {
 		return
 	}
