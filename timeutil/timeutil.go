@@ -12,6 +12,7 @@ var (
 
 // CSTLayout China Standard Time Layout
 const CSTLayout = "2006-01-02 15:04:05"
+const YMDLayout = "20060102"
 
 func init() {
 	var err error
