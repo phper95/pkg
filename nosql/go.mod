@@ -1,4 +1,4 @@
-module gitee.com/phper95/nosql
+module gitee.com/phper95/pkg/nosql
 
 go 1.16
 
