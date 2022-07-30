@@ -3,6 +3,7 @@ package timeutil
 import (
 	"math"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -66,6 +67,11 @@ func GMTLayoutString() string {
 // ParseGMTInLocation 格式化时间
 func ParseGMTInLocation(date string) (time.Time, error) {
 	return time.ParseInLocation(http.TimeFormat, date, cst)
+}
+
+func YMDLayoutInt64() int64 {
+	ymdTime, _ := strconv.ParseInt(time.Now().In(cst).Format(YMDLayout), 10, 64)
+	return ymdTime
 }
 
 // SubInLocation 计算时间差

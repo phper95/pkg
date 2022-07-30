@@ -17,3 +17,8 @@ func TestCSTLayoutStringToUnix(t *testing.T) {
 func TestGMTLayoutString(t *testing.T) {
 	t.Log(GMTLayoutString())
 }
+
+func TestYMDLayoutInt64(t *testing.T) {
+	tm := YMDLayoutInt64()
+	t.Log(tm)
+}
