@@ -15,6 +15,15 @@ func IncludeLetter(str string) bool {
 	return false
 }
 
+func IsDigit(str string) bool {
+	for _, x := range []rune(str) {
+		if !unicode.IsDigit(x) {
+			return false
+		}
+	}
+	return true
+}
+
 func Int64ToString(num int64) string {
 	return strconv.FormatInt(num, 10)
 }

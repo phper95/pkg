@@ -241,7 +241,7 @@ func (client *MgClient) FindUseCursor(db string, table string, batchSize int32, 
 		err    error
 	)
 	opts := &options.FindOptions{}
-	opts.SetBatchSize(batchSize)
+	opts.SetBatchSize(batchSize).SetMaxTime()
 	collection := client.Database(db).Collection(table)
 	if cursor, err = collection.Find(getContext(), filter, opts); err != nil {
 		return err
