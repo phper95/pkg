@@ -10,7 +10,7 @@ const (
 )
 
 func TestPutAndGetObj(t *testing.T) {
-	err := InitService(DefaultClientName, SK, "", Region, "http: //127.0.0.1:8333")
+	err := InitService(DefaultClientName, SK, "", Region, "127.0.0.1:8333")
 	if err != nil {
 		t.Error("InitService error", err)
 	}

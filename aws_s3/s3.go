@@ -9,6 +9,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"io/ioutil"
+	"log"
+	"os"
 )
 
 type Service struct {
@@ -28,10 +30,14 @@ type stdLogger interface {
 	Println(v ...interface{})
 }
 
+func init() {
+	StdLogger = log.New(os.Stdout, "[breaker] ", log.LstdFlags|log.Lshortfile)
+}
+
 func InitService(clientID, sk, token, region, point string) error {
 	credential := credentials.NewStaticCredentials(clientID, sk, token)
 	cfg := aws.NewConfig().WithCredentials(credential).WithRegion(region).
-		WithEndpoint(point).WithS3ForcePathStyle(true)
+		WithEndpoint(point).WithS3ForcePathStyle(true).WithDisableSSL(true)
 	sess, err := session.NewSession(cfg)
 	if err != nil {
 		return err
@@ -84,7 +90,11 @@ func (s *Service) PutObj(key, bucket string, data []byte) error {
 	}
 	out, err := s.Client.PutObject(inputObject)
 	if err != nil {
-		StdLogger.Println("PutS3Object ", err, out.String())
+		outStr := ""
+		if out != nil {
+			outStr = out.String()
+		}
+		StdLogger.Print("PutS3Object ", err, outStr)
 		return err
 	}
 	return nil
