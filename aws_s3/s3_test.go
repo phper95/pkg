@@ -3,12 +3,14 @@ package aws_s3
 import "testing"
 
 const (
-	Key    = "test"
-	Bucket = "test"
+	Key    = "mail_content/test"
+	Bucket = "test-bucket"
+	SK     = "admin123"
+	Region = "weed"
 )
 
 func TestPutAndGetObj(t *testing.T) {
-	err := InitService(DefaultClientName, "", "", "", "http: //127.0.0.1:8333")
+	err := InitService(DefaultClientName, SK, "", Region, "http: //127.0.0.1:8333")
 	if err != nil {
 		t.Error("InitService error", err)
 	}
