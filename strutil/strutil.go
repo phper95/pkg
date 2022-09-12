@@ -2,8 +2,10 @@ package strutil
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 	"unicode"
+	"unsafe"
 )
 
 func IncludeLetter(str string) bool {
@@ -28,4 +30,14 @@ func IsDigit(str string) bool {
 
 func Int64ToString(num int64) string {
 	return strconv.FormatInt(num, 10)
+}
+
+func BytesToString(data *[]byte) string {
+	return *(*string)(unsafe.Pointer(data))
+}
+
+func StringToBytes(data string) (b []byte) {
+	*(*string)(unsafe.Pointer(&b)) = data
+	(*reflect.SliceHeader)(unsafe.Pointer(&b)).Cap = len(data)
+	return
 }
