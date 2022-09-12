@@ -36,6 +36,9 @@ func InitService(clientID, sk, token, region, point string) error {
 	if err != nil {
 		return err
 	}
+	if len(clients) == 0 {
+		clients = make(map[string]*Service, 0)
+	}
 	clients[clientID] = &Service{
 		Client:   s3.New(sess),
 		EndPoint: point,

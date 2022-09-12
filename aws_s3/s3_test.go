@@ -1,0 +1,25 @@
+package aws_s3
+
+import "testing"
+
+const (
+	Key    = "test"
+	Bucket = "test"
+)
+
+func TestPutAndGetObj(t *testing.T) {
+	err := InitService(DefaultClientName, "", "", "", "http: //127.0.0.1:8333")
+	if err != nil {
+		t.Error("InitService error", err)
+	}
+	err = GetS3Client(DefaultClientName).PutObj(Key, Bucket, []byte("this is for test"))
+	if err != nil {
+		t.Error("PutObj error", err)
+	}
+	res, err := GetS3Client(DefaultClientName).GetObj(Key, Bucket)
+	if err != nil {
+		t.Error("GetObj error", err, string(res))
+	}
+	t.Log(string(res))
+
+}
