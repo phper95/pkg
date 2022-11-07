@@ -80,15 +80,27 @@ func InitBreaker(breakerName string, options ...Option) *breaker {
 			halfOpenCount = opt.HalfOpenCount
 		}
 
+		if opt.OpenStatePeriod > 0 {
+			openStatePeriod = opt.OpenStatePeriod
+		}
+
 		if opt.Interval > 0 {
 			interval = opt.Interval
 		}
 
 		cb := gobreaker.NewTwoStepCircuitBreaker(gobreaker.Settings{
-			Name:        breakerName,
+			Name: breakerName,
+
+			//MaxRequests 是半开状态下允许的最大请求数，如果MaxRequests为0，只会允许一个请求
 			MaxRequests: halfOpenCount,
-			Interval:    interval,
-			Timeout:     openStatePeriod,
+
+			//断路器会在关闭状态下，在Interval周期时间清理计数器，如果interval=0将不会清空计数器
+			Interval: interval,
+			//断路器开启时，经过openStatePeriod时间后进入到半开状态
+			Timeout: openStatePeriod,
+
+			//当断路器处于关闭状态时，有失败的请求进入的时候会被调用，当函数返回true时断路器会被开启。
+			//这里设置了当失败请求数在interval时间内达到breakCount的个数时就会触发开启断路器
 			ReadyToTrip: func(counts gobreaker.Counts) bool {
 				result := counts.ConsecutiveFailures > breakCount
 				if result {
