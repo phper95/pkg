@@ -168,7 +168,7 @@ func (c *Client) DeleteByQuery(ctx context.Context, indexName, id, routing strin
 func (c *Client) BulkDelete(indexName, id, routing string) {
 	bulkDeleteRequest := elastic.NewBulkDeleteRequest().Index(indexName).Id(id)
 	if len(routing) > 0 {
-		bulkDeleteRequest.Id(routing)
+		bulkDeleteRequest.Routing(routing)
 	}
 	c.BulkProcessor.Add(bulkDeleteRequest)
 }
@@ -176,7 +176,7 @@ func (c *Client) BulkDelete(indexName, id, routing string) {
 func (c *Client) BulkDeleteWithVersion(indexName, id, routing string, version int64) {
 	bulkDeleteRequest := elastic.NewBulkDeleteRequest().Index(indexName).Id(id).VersionType(DefaultVersionType).Version(version)
 	if len(routing) > 0 {
-		bulkDeleteRequest.Id(routing)
+		bulkDeleteRequest.Routing(routing)
 	}
 	c.BulkProcessor.Add(bulkDeleteRequest)
 }
