@@ -6,6 +6,6 @@
 * 支持的支付方式
 目前支持微信app，支付宝网页版，支付宝app。
 
-* github地址：https://gitee.com/phper95/pkg/tree/master/pay
+* github地址：https://github.com/phper95/pkg/tree/master/pay
 
-* 使用demo详见文件：https://gitee.com/phper95/pkg/blob/master/pay/demo/main.go
+* 使用demo详见文件：https://github.com/phper95/pkg/blob/master/pay/demo/main.go

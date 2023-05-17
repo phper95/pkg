@@ -2,7 +2,7 @@ package db
 
 import (
 	"fmt"
-	"gitee.com/phper95/pkg/errors"
+	"github.com/phper95/pkg/errors"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

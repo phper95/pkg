@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gitee.com/phper95/nosql"
+	"github.com/phper95/nosql"
 )
 
 type User struct {
@@ -154,8 +154,8 @@ func main() {
 
 }
 
-//游标会超时，所以在回调函数内部，一般不宜耦合过多操作
-//可以将回调中查询到的数放到本地数组或者map中
+// 游标会超时，所以在回调函数内部，一般不宜耦合过多操作
+// 可以将回调中查询到的数放到本地数组或者map中
 func callback(res interface{}, err error) {
 	nosql.MongoStdLogger.Print(res, err)
 }

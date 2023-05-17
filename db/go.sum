@@ -1,7 +1,7 @@
-gitee.com/phper95/pkg/errors v0.0.0-20220305150109-4dedf954f7fb h1:raSnmzmcXtJ5hWia9nAhbPzIj25ZkEbwbVJYgQx5CEE=
-gitee.com/phper95/pkg/errors v0.0.0-20220305150109-4dedf954f7fb/go.mod h1:QjWVzI0aT0OcBninaydQjEOE7mwhhI5x9SmUOkxR1aY=
-gitee.com/phper95/pkg/logger v0.0.0-20220329234458-2cfbe7f00626 h1:aes8k4PJegoJI+njOf9GbzXGtTL/xRHBjabOrSlTQVo=
-gitee.com/phper95/pkg/logger v0.0.0-20220329234458-2cfbe7f00626/go.mod h1:UTngb7FT918eoS8zFyoFtJaTmyrZMfcgBv8lZeckG+0=
+github.com/phper95/pkg/errors v0.0.0-20220305150109-4dedf954f7fb h1:raSnmzmcXtJ5hWia9nAhbPzIj25ZkEbwbVJYgQx5CEE=
+github.com/phper95/pkg/errors v0.0.0-20220305150109-4dedf954f7fb/go.mod h1:QjWVzI0aT0OcBninaydQjEOE7mwhhI5x9SmUOkxR1aY=
+github.com/phper95/pkg/logger v0.0.0-20220329234458-2cfbe7f00626 h1:aes8k4PJegoJI+njOf9GbzXGtTL/xRHBjabOrSlTQVo=
+github.com/phper95/pkg/logger v0.0.0-20220329234458-2cfbe7f00626/go.mod h1:UTngb7FT918eoS8zFyoFtJaTmyrZMfcgBv8lZeckG+0=
 github.com/BurntSushi/toml v1.0.0 h1:dtDWrepsVPfW9H/4y7dDgFc2MBUSeJhlaDtK13CxFlU=
 github.com/BurntSushi/toml v1.0.0/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/benbjohnson/clock v1.1.0 h1:Q92kusRqC1XV2MjkWETPvjJVqKetz1OzxZB7mHJLju8=

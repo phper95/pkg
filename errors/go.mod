@@ -1,4 +1,4 @@
-module gitee.com/phper95/pkg/errors
+module github.com/phper95/pkg/errors
 
 go 1.16
 

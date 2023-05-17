@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"gitee.com/phper95/pkg/logger"
-	"gitee.com/phper95/pkg/mq"
 	"github.com/Shopify/sarama"
+	"github.com/phper95/pkg/logger"
+	"github.com/phper95/pkg/mq"
 	"go.uber.org/zap"
 	"os"
 	"os/signal"

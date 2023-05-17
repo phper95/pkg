@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gitee.com/phper95/pkg/db"
+	"github.com/phper95/pkg/db"
 	"go.uber.org/zap"
 	"time"
 )
@@ -29,7 +29,7 @@ func initMysql() {
 //	Email    string `gorm:"type:varchar(100);unique"`
 //}
 
-//字段属性设置
+// 字段属性设置
 type User struct {
 	ID uint //bigint(20) unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY
 	//ID       uint64
@@ -42,14 +42,15 @@ type User struct {
 	Email    string `gorm:"type:varchar(100);unique"`
 }
 
-//type Tabler interface {
-//	TableName() string
-//}
+//	type Tabler interface {
+//		TableName() string
+//	}
 //
-//// TableName 会将 User 的表名重写为 `user_table1`
-//func (User) TableName() string {
-//	return "user_table1"
-//}
+// // TableName 会将 User 的表名重写为 `user_table1`
+//
+//	func (User) TableName() string {
+//		return "user_table1"
+//	}
 func main() {
 	initMysql()
 

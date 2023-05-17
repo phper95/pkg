@@ -2,10 +2,10 @@ package cache
 
 import (
 	"fmt"
-	"gitee.com/phper95/pkg/errors"
-	"gitee.com/phper95/pkg/timeutil"
-	"gitee.com/phper95/pkg/trace"
 	"github.com/go-redis/redis/v7"
+	"github.com/phper95/pkg/errors"
+	"github.com/phper95/pkg/timeutil"
+	"github.com/phper95/pkg/trace"
 	"go.uber.org/zap"
 	"strconv"
 	"strings"

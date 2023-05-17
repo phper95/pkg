@@ -3,7 +3,7 @@ package routine
 import (
 	"context"
 	"fmt"
-	"gitee.com/phper95/pkg/errors"
+	"github.com/phper95/pkg/errors"
 	"log"
 	"os"
 	"sync"

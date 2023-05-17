@@ -1,7 +1,7 @@
 package mq
 
 import (
-	"gitee.com/phper95/pkg/logger"
+	"github.com/phper95/pkg/logger"
 	"github.com/Shopify/sarama"
 	"github.com/eapache/go-resiliency/breaker"
 	"github.com/pkg/errors"

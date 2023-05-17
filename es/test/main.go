@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"gitee.com/phper95/pkg/es"
+	"github.com/phper95/pkg/es"
 	"strconv"
 )
 

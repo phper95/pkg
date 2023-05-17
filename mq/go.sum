@@ -1,5 +1,5 @@
-gitee.com/phper95/pkg/logger v0.0.0-20220605100829-4a70f3b0539a h1:UW0HS1DaldO2HQTNDAcrp5nn0pKOiRLre6pQAdKx3jo=
-gitee.com/phper95/pkg/logger v0.0.0-20220605100829-4a70f3b0539a/go.mod h1:UTngb7FT918eoS8zFyoFtJaTmyrZMfcgBv8lZeckG+0=
+github.com/phper95/pkg/logger v0.0.0-20220605100829-4a70f3b0539a h1:UW0HS1DaldO2HQTNDAcrp5nn0pKOiRLre6pQAdKx3jo=
+github.com/phper95/pkg/logger v0.0.0-20220605100829-4a70f3b0539a/go.mod h1:UTngb7FT918eoS8zFyoFtJaTmyrZMfcgBv8lZeckG+0=
 github.com/BurntSushi/toml v1.0.0 h1:dtDWrepsVPfW9H/4y7dDgFc2MBUSeJhlaDtK13CxFlU=
 github.com/BurntSushi/toml v1.0.0/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/Shopify/sarama v1.19.0 h1:9oksLxC6uxVPHPVYUmq6xhr1BOF/hHobWH2UzO67z1s=

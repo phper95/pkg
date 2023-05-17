@@ -1,7 +1,7 @@
 package mq
 
 import (
-	"gitee.com/phper95/pkg/logger"
+	"github.com/phper95/pkg/logger"
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"os"
