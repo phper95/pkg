@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/phper95/nosql"
+	"github.com/phper95/pkg/nosql"
 )
 
 type User struct {
