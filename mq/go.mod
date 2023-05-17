@@ -3,7 +3,6 @@ module github.com/phper95/pkg/mq
 go 1.16
 
 require (
-	github.com/phper95/pkg/logger v0.0.0-20220605100829-4a70f3b0539a
 	github.com/Shopify/sarama v1.19.0
 	github.com/Shopify/toxiproxy v2.1.4+incompatible // indirect
 	github.com/bsm/sarama-cluster v2.1.15+incompatible
@@ -14,6 +13,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/onsi/ginkgo v1.12.0 // indirect
 	github.com/onsi/gomega v1.9.0 // indirect
+	github.com/phper95/pkg/logger v0.0.0-20230517145757-27be2fc31eea
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
