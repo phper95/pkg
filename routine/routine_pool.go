@@ -20,10 +20,12 @@ type stdLogger interface {
 var routineLogger stdLogger
 
 func init() {
-	routineLogger = log.New(os.Stdout, "[Gorm] ", log.LstdFlags|log.Lshortfile)
+	routineLogger = log.New(os.Stdout, "[routine] ", log.LstdFlags|log.Lshortfile)
 }
 
-var defaultPool *Pool
+const PoolNameDefault = "default"
+
+var pools map[string]*Pool
 
 type Task interface {
 	GetTaskName() string
@@ -53,33 +55,6 @@ func (t *BaseTask) Execute() {
 	t.F()
 }
 
-func Init(numWorkers int, maxJobQueueLen int, maxJobTimeout time.Duration) {
-	defaultPool = InitPoolWithName("default", numWorkers, maxJobQueueLen, maxJobTimeout)
-	defaultPool.Start()
-}
-
-func PutTask(f Function) {
-	if defaultPool == nil {
-		Init(8, 64, 10*time.Second)
-	}
-	defaultPool.Put(f)
-}
-
-func Stop() {
-	if defaultPool == nil {
-		return
-	}
-	defaultPool.Stop()
-	defaultPool = nil
-}
-
-func QueueLen() int {
-	if defaultPool == nil {
-		return 0
-	}
-	return defaultPool.QueueLen()
-}
-
 type worker struct {
 	Stop chan bool
 	Done int64
@@ -99,8 +74,17 @@ type Pool struct {
 }
 
 func InitPoolWithName(name string, numWorkers int, maxJobQueueLen int, maxJobTimeout time.Duration) *Pool {
+	if pools != nil {
+		pools = make(map[string]*Pool, 0)
+	}
+	p := NewPool(numWorkers, maxJobQueueLen, maxJobTimeout)
+	p.Name = name
+	pools[name] = p
+	return p
+}
+
+func NewPool(numWorkers int, maxJobQueueLen int, maxJobTimeout time.Duration) *Pool {
 	p := &Pool{
-		Name:          name,
 		JobQueue:      make(chan Task, maxJobQueueLen),
 		workers:       make([]*worker, numWorkers),
 		numWorkers:    numWorkers,
@@ -112,10 +96,15 @@ func InitPoolWithName(name string, numWorkers int, maxJobQueueLen int, maxJobTim
 	}
 	return p
 }
-
-func NewPool(numWorkers int, maxJobQueueLen int, maxJobTimeout time.Duration) *Pool {
-	p := InitPoolWithName("default", numWorkers, maxJobQueueLen, maxJobTimeout)
-	return p
+func GetPool(name string) *Pool {
+	if pools == nil {
+		panic("call InitPoolWithName before !")
+	}
+	if pool, ok := pools[name]; !ok {
+		panic("call InitPoolWithName before !")
+	} else {
+		return pool
+	}
 }
 
 func (p *Pool) QueueLen() int {
@@ -316,4 +305,14 @@ func (p *Pool) StopWait() {
 	}
 
 	p.Stop()
+}
+
+func StopAllNamedPool(force bool) {
+	for _, pool := range pools {
+		if force {
+			pool.Stop()
+		} else {
+			pool.StopWait()
+		}
+	}
 }
