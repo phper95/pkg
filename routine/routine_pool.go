@@ -74,7 +74,7 @@ type Pool struct {
 }
 
 func InitPoolWithName(name string, numWorkers int, maxJobQueueLen int, maxJobTimeout time.Duration) *Pool {
-	if pools != nil {
+	if pools == nil {
 		pools = make(map[string]*Pool, 0)
 	}
 	p := NewPool(numWorkers, maxJobQueueLen, maxJobTimeout)
