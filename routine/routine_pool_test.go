@@ -9,24 +9,24 @@ import (
 
 func TestRoutinePoolPanic(t *testing.T) {
 	numWorkers, jobQueueLen := 1, 2
-	Init(numWorkers, jobQueueLen, time.Second)
+	InitPoolWithName(PoolNameDefault, numWorkers, jobQueueLen, time.Second)
 
 	panicFunc := func() {
 		var err error
 		err.Error()
 	}
-	PutTask(panicFunc)
+	GetPool(PoolNameDefault).Put(panicFunc)
 	success := false
 	routineFunc := func() {
 		success = true
 		routineLogger.Printf("panicFunc exec")
 	}
-	PutTask(routineFunc)
+	GetPool(PoolNameDefault).Put(routineFunc)
 	time.Sleep(time.Millisecond * 50)
 	if !success {
 		t.Fatalf("routineFunc exec failed")
 	}
-	Stop()
+	GetPool(PoolNameDefault).Stop()
 }
 
 func TestRoutinePool(t *testing.T) {
@@ -34,7 +34,6 @@ func TestRoutinePool(t *testing.T) {
 	numWorkers, jobQueueLen := 10, 100
 	jobTimeout := time.Duration(0)
 	routinePool := InitPoolWithName("test", numWorkers, jobQueueLen, jobTimeout)
-	routinePool.Start()
 	for i := 0; i < 10; i++ {
 		cur := i
 		routinePool.Put(func() {
@@ -49,7 +48,6 @@ func TestRoutineTimeout(t *testing.T) {
 	numWorkers, jobQueueLen := 2, 4
 	jobTimeout := time.Second / 100
 	grp := InitPoolWithName("timeout-job", numWorkers, jobQueueLen, jobTimeout)
-	grp.Start()
 
 	l := sync.Mutex{}
 	jobCnt := 0

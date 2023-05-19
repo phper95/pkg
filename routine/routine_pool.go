@@ -80,6 +80,7 @@ func InitPoolWithName(name string, numWorkers int, maxJobQueueLen int, maxJobTim
 	p := NewPool(numWorkers, maxJobQueueLen, maxJobTimeout)
 	p.Name = name
 	pools[name] = p
+	p.Start()
 	return p
 }
 
