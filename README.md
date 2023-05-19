@@ -15,6 +15,7 @@
 7. routine 协程池
 8. shutdown 优雅关闭
 9. logger 日志库
+10. error 异常处理
 等等
 
 
