@@ -84,24 +84,24 @@ func GetMongoClient(clientName string) *MgClient {
 }
 
 // example
-//InsertMany("db","table",bson.D{{"name", "Alice"}},bson.D{{"name", "Bob"}})
+// InsertMany("db","table",bson.D{{"name", "Alice"}},bson.D{{"name", "Bob"}})
 func (client *MgClient) InsertMany(db string, table string, docs ...interface{}) error {
 	_, err := client.Database(db).Collection(table).InsertMany(getContext(), docs)
 	return err
 }
 
-//上面的InsertMany在遇到异常的时候（比如插入mongo集群中已存在的数据），全部文档都会插入失败
-//这个方法则忽略异常的文档，将没出问题的这部分文档写入到mongo
-//检测插入过程的错误可以使用下面的方式
-//err := GetMongoClient(DefaultMongoClient).InsertManyTryBest("db", "table", doc)
-//we, ok := err.(mongo.BulkWriteException)
-//if ok {
-//TO DO ...
-//}
-//出现重复文档的code = 11000
-//if we.HasErrorCode(11000) {
+// 上面的InsertMany在遇到异常的时候（比如插入mongo集群中已存在的数据），全部文档都会插入失败
+// 这个方法则忽略异常的文档，将没出问题的这部分文档写入到mongo
+// 检测插入过程的错误可以使用下面的方式
+// err := GetMongoClient(DefaultMongoClient).InsertManyTryBest("db", "table", doc)
+// we, ok := err.(mongo.BulkWriteException)
+// if ok {
 // TO DO ...
-//}
+// }
+// 出现重复文档的code = 11000
+// if we.HasErrorCode(11000) {
+// TO DO ...
+// }
 func (client *MgClient) InsertManyTryBest(db string, table string, docs ...interface{}) error {
 	var err error
 	collection := client.Database(db).Collection(table)
@@ -134,15 +134,16 @@ func (client *MgClient) ReplaceOne(db string, table string, filter bson.D, doc i
 
 // example
 // filter := bson.D{{"_id", id}}
+//
 //	update := bson.D{{"email", "newemail@example.com"}}
 func (client *MgClient) UpdateOne(db string, table string, filter bson.D, update interface{}) error {
 	_, err := client.Database(db).Collection(table).UpdateOne(getContext(), filter, bson.M{"$set": update}, nil)
 	return err
 }
 
-//example
-//filter := bson.D{{"birthday", today}}
-//update := bson.D{{"$inc", bson.D{{"age", 1}}}}
+// example
+// filter := bson.D{{"birthday", today}}
+// update := bson.D{{"$inc", bson.D{{"age", 1}}}}
 func (client *MgClient) UpdateMany(db string, table string, filter bson.D, update interface{}) error {
 	_, err := client.Database(db).Collection(table).UpdateMany(getContext(), filter, update, nil)
 	return err
@@ -241,7 +242,7 @@ func (client *MgClient) FindUseCursor(db string, table string, batchSize int32, 
 		err    error
 	)
 	opts := &options.FindOptions{}
-	opts.SetBatchSize(batchSize).SetMaxTime()
+	opts.SetBatchSize(batchSize)
 	collection := client.Database(db).Collection(table)
 	if cursor, err = collection.Find(getContext(), filter, opts); err != nil {
 		return err
@@ -312,7 +313,7 @@ func (client *MgClient) QueryCount(db, table string, filter bson.D, defaultVal i
 	return client.Database(db).Collection(table).CountDocuments(getContext(), filter, nil)
 }
 
-//通过metadata获取整个集合中总记录数
+// 通过metadata获取整个集合中总记录数
 func (client *MgClient) EstimatedDocumentCount(db, table string) (int64, error) {
 	return client.Database(db).Collection(table).EstimatedDocumentCount(getContext(), nil)
 }
