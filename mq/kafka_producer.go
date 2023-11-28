@@ -273,23 +273,31 @@ func (syncProducer *SyncProducer) check() {
 }
 
 //SendMsgs 同步发送消息到 kafka
-func (syncProducer *SyncProducer) SendMessages(mses []*sarama.ProducerMessage) (errs sarama.ProducerErrors) {
+func (syncProducer *SyncProducer) SendMessages(mses []*sarama.ProducerMessage) sarama.ProducerErrors {
 	if syncProducer.Status != KafkaProducerConnected {
-		return append(errs, &sarama.ProducerError{Err: errors.New("kafka syncProducer " + syncProducer.Status)})
+		return sarama.ProducerErrors{&sarama.ProducerError{Err: errors.New("kafka syncProducer " + syncProducer.Status)}}
 	}
-	errs = (*syncProducer.SyncProducer).SendMessages(mses).(sarama.ProducerErrors)
-	for _, err := range errs {
-		//触发重连
-		if errors.Is(err, sarama.ErrBrokerNotAvailable) {
-			syncProducer.StatusLock.Lock()
-			if syncProducer.Status == KafkaProducerConnected {
-				syncProducer.Status = KafkaProducerDisconnected
-				syncProducer.ReConnect <- true
-			}
-			syncProducer.StatusLock.Unlock()
+	errs := (*syncProducer.SyncProducer).SendMessages(mses)
+	if errs != nil {
+		retErrs, ok := errs.(sarama.ProducerErrors)
+		if !ok {
+			KafkaStdLogger.Println("retErrs convert error:", zap.Error(errs))
+			return retErrs
 		}
+		for _, err := range retErrs {
+			//触发重连
+			if errors.Is(err, sarama.ErrBrokerNotAvailable) {
+				syncProducer.StatusLock.Lock()
+				if syncProducer.Status == KafkaProducerConnected {
+					syncProducer.Status = KafkaProducerDisconnected
+					syncProducer.ReConnect <- true
+				}
+				syncProducer.StatusLock.Unlock()
+			}
+		}
+		return retErrs
 	}
-	return
+	return nil
 }
 
 //SendMsg 同步发送消息到 kafka
