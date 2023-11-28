@@ -71,7 +71,7 @@ func (c *Client) BulkCreate(indexName, id, routing string, doc interface{}) {
 func (c *Client) BulkCreateDocs(ctx context.Context, indexName string, docs []*BulkCreateDoc) (*elastic.BulkResponse, error) {
 	bulkService := c.Client.Bulk().ErrorTrace(true)
 	for _, doc := range docs {
-		bulkCreateRequest := elastic.NewBulkCreateRequest().Index(indexName)
+		bulkCreateRequest := elastic.NewBulkCreateRequest().Index(indexName).Doc(doc.Doc)
 		if len(doc.ID) > 0 {
 			bulkCreateRequest.Id(doc.ID)
 		}
